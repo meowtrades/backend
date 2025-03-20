@@ -269,7 +269,7 @@ export class InjectivePlugin implements DCAPlugin {
         } catch (error) {
             // If no balance found or error occurs, return 0
             logger.error(`Failed to get INJ balance: ${error}`);
-            return 1;
+            return 0;
         }
     }
 }
