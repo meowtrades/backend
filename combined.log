@@ -1,0 +1,60 @@
+{"level":"info","message":"Using wallet address: inj1cdymmkwla6v545l4jp4yu59elelqmd3ptx6lrs","timestamp":"2025-03-20T20:40:39.611Z"}
+{"level":"info","message":"Sending swapped tokens to: inj1aayaah777pwaudtzlxkemytwchpy05dl03d4xt","timestamp":"2025-03-20T20:40:39.614Z"}
+{"level":"info","message":"Swap amount: 1 USDT","timestamp":"2025-03-20T20:40:39.614Z"}
+{"level":"info","message":"Swap transaction successful: 3696DAE0C9821C23B99D2F6061B25115B69BAA0C6407E9193EF5B3A714FFA727","timestamp":"2025-03-20T20:40:43.038Z"}
+{"level":"info","message":"Transferring swapped tokens to inj1aayaah777pwaudtzlxkemytwchpy05dl03d4xt","timestamp":"2025-03-20T20:40:43.039Z"}
+{"level":"info","message":"Sending 0.08899999999999961 INJ to inj1aayaah777pwaudtzlxkemytwchpy05dl03d4xt","timestamp":"2025-03-20T20:40:48.937Z"}
+{"level":"info","message":"Transfer transaction successful: 513E79F8D21FC8AFA49262E6FCFEFAA4970E9911A2E62F190D63BBC1B32CACDA","timestamp":"2025-03-20T20:40:51.695Z"}
+{"level":"info","message":"Using wallet address: inj1cdymmkwla6v545l4jp4yu59elelqmd3ptx6lrs","timestamp":"2025-03-20T20:43:55.725Z"}
+{"level":"info","message":"Sending swapped tokens to: 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHX","timestamp":"2025-03-20T20:43:55.728Z"}
+{"level":"info","message":"Swap amount: 1 USDT","timestamp":"2025-03-20T20:43:55.728Z"}
+{"level":"info","message":"Swap transaction successful: 63200D8F626F766795916E099BD456574D5F6DF898D3DF047BA58085328B44B9","timestamp":"2025-03-20T20:43:59.038Z"}
+{"level":"info","message":"Transferring swapped tokens to 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHX","timestamp":"2025-03-20T20:43:59.039Z"}
+{"level":"info","message":"Sending 0.089 INJ to 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHX","timestamp":"2025-03-20T20:44:05.472Z"}
+{"level":"error","message":"Failed to execute transaction: The address is not valid","timestamp":"2025-03-20T20:44:08.106Z"}
+{"level":"info","message":"Using wallet address: inj1cdymmkwla6v545l4jp4yu59elelqmd3ptx6lrs","timestamp":"2025-03-20T20:45:00.728Z"}
+{"level":"info","message":"Sending swapped tokens to: 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHX","timestamp":"2025-03-20T20:45:00.730Z"}
+{"level":"info","message":"Swap amount: 1 USDT","timestamp":"2025-03-20T20:45:00.731Z"}
+{"level":"info","message":"Swap transaction successful: E62542E2A33E86FECEE89CDF019B10FD2F8D5B3850D4D5313439942DA676FAA7","timestamp":"2025-03-20T20:45:03.691Z"}
+{"level":"info","message":"Transferring swapped tokens to 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHX","timestamp":"2025-03-20T20:45:03.692Z"}
+{"level":"info","message":"Sending 0.178 INJ to 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHX","timestamp":"2025-03-20T20:45:09.544Z"}
+{"level":"error","message":"Failed to execute transaction: The address is not valid","timestamp":"2025-03-20T20:45:12.170Z"}
+{"level":"info","message":"Initialized Sonic.game plugin with testnet connection","timestamp":"2025-03-20T20:53:04.266Z"}
+{"level":"info","message":"Using existing pool: BbLDYff58ov1rBPgjyoUPXPpDc5wn57Y2qyoYXdBuMVK","timestamp":"2025-03-20T20:53:04.269Z"}
+{"level":"info","message":"Successfully loaded wallet: 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHXj","timestamp":"2025-03-20T20:53:04.319Z"}
+{"level":"info","message":"Using wallet address: 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHXj","timestamp":"2025-03-20T20:53:04.320Z"}
+{"level":"info","message":"Sending tokens to: 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHX","timestamp":"2025-03-20T20:53:04.320Z"}
+{"level":"info","message":"Swap amount: 1 USDC","timestamp":"2025-03-20T20:53:04.321Z"}
+{"level":"info","message":"User USDC account: 3mGmUj1bAaFjHhiB8eyBsi7B3w7LB5Xg4LX3ajxumEqG","timestamp":"2025-03-20T20:53:05.341Z"}
+{"level":"info","message":"User SONIC account: 6o1wSmYQTDvecMbJp76yjLbwRdHLZVKsRow49NXjWohP","timestamp":"2025-03-20T20:53:05.635Z"}
+{"level":"info","message":"Transferring 1 USDC to the pool...","timestamp":"2025-03-20T20:53:05.636Z"}
+{"level":"info","message":"Creating swap instruction...","timestamp":"2025-03-20T20:53:07.733Z"}
+{"level":"error","message":"Transaction execution failed: Error: Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: insufficient funds for instruction. \nLogs: \n[\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 invoke [1]\",\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 consumed 5182 of 200000 compute units\",\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 failed: insufficient funds for instruction\"\n]. \nCatch the `SendTransactionError` and call `getLogs()` on it for full details.","timestamp":"2025-03-20T20:53:08.325Z"}
+{"level":"error","message":"Failed to execute swap: Error: Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: insufficient funds for instruction. \nLogs: \n[\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 invoke [1]\",\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 consumed 5182 of 200000 compute units\",\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 failed: insufficient funds for instruction\"\n]. \nCatch the `SendTransactionError` and call `getLogs()` on it for full details.","timestamp":"2025-03-20T20:53:08.327Z"}
+{"level":"info","message":"Initialized Sonic.game plugin with testnet connection","timestamp":"2025-03-20T20:53:55.230Z"}
+{"level":"info","message":"Using existing pool: BbLDYff58ov1rBPgjyoUPXPpDc5wn57Y2qyoYXdBuMVK","timestamp":"2025-03-20T20:53:55.233Z"}
+{"level":"info","message":"Successfully loaded wallet: 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHXj","timestamp":"2025-03-20T20:53:55.286Z"}
+{"level":"info","message":"Using wallet address: 9eTWRJ8yW3hya7YaGUSSTWkps3T1umzTpQYPBjxpRHXj","timestamp":"2025-03-20T20:53:55.286Z"}
+{"level":"info","message":"Sending tokens to: JCwXWzAxbch93iecPrghqa7A1QPGEqWeNb2Ge1vaorMT","timestamp":"2025-03-20T20:53:55.286Z"}
+{"level":"info","message":"Swap amount: 1 USDC","timestamp":"2025-03-20T20:53:55.287Z"}
+{"level":"info","message":"User USDC account: 3mGmUj1bAaFjHhiB8eyBsi7B3w7LB5Xg4LX3ajxumEqG","timestamp":"2025-03-20T20:53:56.250Z"}
+{"level":"info","message":"User SONIC account: 6o1wSmYQTDvecMbJp76yjLbwRdHLZVKsRow49NXjWohP","timestamp":"2025-03-20T20:53:56.553Z"}
+{"level":"info","message":"Transferring 1 USDC to the pool...","timestamp":"2025-03-20T20:53:56.553Z"}
+{"level":"info","message":"Creating swap instruction...","timestamp":"2025-03-20T20:53:58.740Z"}
+{"level":"error","message":"Transaction execution failed: Error: Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: insufficient funds for instruction. \nLogs: \n[\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 invoke [1]\",\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 consumed 5182 of 200000 compute units\",\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 failed: insufficient funds for instruction\"\n]. \nCatch the `SendTransactionError` and call `getLogs()` on it for full details.","timestamp":"2025-03-20T20:53:59.358Z"}
+{"level":"error","message":"Failed to execute swap: Error: Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: insufficient funds for instruction. \nLogs: \n[\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 invoke [1]\",\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 consumed 5182 of 200000 compute units\",\n  \"Program HoGLe4rmFQ25oNNiRQ4rueYsKzEJdnoLFhoVtafjcC66 failed: insufficient funds for instruction\"\n]. \nCatch the `SendTransactionError` and call `getLogs()` on it for full details.","timestamp":"2025-03-20T20:53:59.360Z"}
+{"level":"error","message":"Failed to execute transaction: Error: Mnemonic not found in environment variables (MNEMONIC_INJECTIVE)","timestamp":"2025-03-20T20:54:44.084Z"}
+{"level":"info","message":"Using wallet address: inj1cdymmkwla6v545l4jp4yu59elelqmd3ptx6lrs","timestamp":"2025-03-20T20:55:02.231Z"}
+{"level":"info","message":"Sending swapped tokens to: JCwXWzAxbch93iecPrghqa7A1QPGEqWeNb2Ge1vaorMT","timestamp":"2025-03-20T20:55:02.234Z"}
+{"level":"info","message":"Swap amount: 1 USDT","timestamp":"2025-03-20T20:55:02.234Z"}
+{"level":"info","message":"Swap transaction successful: C5071929278D7EEB3DF6073AF9E291B5F06189A9828F26528F1ECED0A9ABA641","timestamp":"2025-03-20T20:55:06.376Z"}
+{"level":"info","message":"Transferring swapped tokens to JCwXWzAxbch93iecPrghqa7A1QPGEqWeNb2Ge1vaorMT","timestamp":"2025-03-20T20:55:06.376Z"}
+{"level":"info","message":"Sending 0.26699999999999996 INJ to JCwXWzAxbch93iecPrghqa7A1QPGEqWeNb2Ge1vaorMT","timestamp":"2025-03-20T20:55:12.322Z"}
+{"level":"error","message":"Failed to execute transaction: The address is not valid","timestamp":"2025-03-20T20:55:14.966Z"}
+{"level":"info","message":"Using wallet address: inj1cdymmkwla6v545l4jp4yu59elelqmd3ptx6lrs","timestamp":"2025-03-20T20:56:25.073Z"}
+{"level":"info","message":"Sending swapped tokens to: inj1aayaah777pwaudtzlxkemytwchpy05dl03d4xt","timestamp":"2025-03-20T20:56:25.075Z"}
+{"level":"info","message":"Swap amount: 1 USDT","timestamp":"2025-03-20T20:56:25.076Z"}
+{"level":"info","message":"Swap transaction successful: 19EBB8F873933D6A7DAABD7F0B990A004C8B0E34A5D27AFD29E77A3CCF9DEB7A","timestamp":"2025-03-20T20:56:28.419Z"}
+{"level":"info","message":"Transferring swapped tokens to inj1aayaah777pwaudtzlxkemytwchpy05dl03d4xt","timestamp":"2025-03-20T20:56:28.420Z"}
+{"level":"info","message":"Sending 0.356 INJ to inj1aayaah777pwaudtzlxkemytwchpy05dl03d4xt","timestamp":"2025-03-20T20:56:34.288Z"}
+{"level":"info","message":"Transfer transaction successful: 9BD0B52D0A78FB674F1121BB54E0C68B1D8F9135076C61CDED0FDCC478F4AFA9","timestamp":"2025-03-20T20:56:36.932Z"}
