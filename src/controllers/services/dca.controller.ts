@@ -1,13 +1,11 @@
-import express from 'express';
-import { DCAService } from '../../../services/general/services/dca';
-import { logger } from '../../../utils/logger';
-import { RiskLevel } from '../../../models/InvestmentPlan';
+import { Request, Response } from 'express';
+import { DCAService } from '../../services/general/services/dca';
+import { logger } from '../../utils/logger';
+import { RiskLevel } from '../../models/InvestmentPlan';
 
-const router = express.Router();
 const dcaService = new DCAService();
 
-// Create a new DCA plan
-router.post('/plans', async (req, res) => {
+export const createPlan = async (req: Request, res: Response) => {
   try {
     const { userId, amount, frequency, toAddress, riskLevel } = req.body;
     
@@ -32,10 +30,9 @@ router.post('/plans', async (req, res) => {
     logger.error('Failed to create DCA plan:', error);
     res.status(500).json({ error: 'Failed to create DCA plan' });
   }
-});
+};
 
-// Stop a DCA plan
-router.post('/plans/:planId/stop', async (req, res) => {
+export const stopPlan = async (req: Request, res: Response) => {
   try {
     const { planId } = req.params;
     const plan = await dcaService.stopPlan(planId);
@@ -49,10 +46,9 @@ router.post('/plans/:planId/stop', async (req, res) => {
     logger.error('Failed to stop DCA plan:', error);
     res.status(500).json({ error: 'Failed to stop DCA plan' });
   }
-});
+};
 
-// Get user's plans
-router.get('/users/:userId/plans', async (req, res) => {
+export const getUserPlans = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const plans = await dcaService.getUserPlans(userId);
@@ -61,10 +57,9 @@ router.get('/users/:userId/plans', async (req, res) => {
     logger.error('Failed to get user plans:', error);
     res.status(500).json({ error: 'Failed to get user plans' });
   }
-});
+};
 
-// Get user's total investment
-router.get('/users/:userId/total-investment', async (req, res) => {
+export const getUserTotalInvestment = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const total = await dcaService.getUserTotalInvestment(userId);
@@ -73,6 +68,4 @@ router.get('/users/:userId/total-investment', async (req, res) => {
     logger.error('Failed to get total investment:', error);
     res.status(500).json({ error: 'Failed to get total investment' });
   }
-});
-
-export default router; 
+}; 

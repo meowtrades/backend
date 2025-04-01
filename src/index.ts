@@ -1,9 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import dcaRoutes from './routes/services/dca/dca.routes';
+import routes from './routes/index.routes';
 import { logger } from './utils/logger';
-import userRoutes from './routes/user.routes';
 
 dotenv.config();
 
@@ -13,8 +12,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dca-se
 
 app.use(express.json());
 
-app.use('/api/services', dcaRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api', routes);
 
 mongoose.connect(MONGODB_URI)
   .then(() => {

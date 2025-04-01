@@ -1,24 +1,18 @@
-// src/routes/user.ts
-import express from 'express';
+import { Request, Response } from 'express';
 import { User } from '../models/User';
 import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
 
-const router = express.Router();
-
-// Create or update user
-router.post('/', async (req, res) => {
+export const createOrUpdateUser = async (req: Request, res: Response) => {
   try {
     let { address } = req.body;
 
-    // Trim and validate address
     if (!address || typeof address !== 'string') {
       return res.status(400).json({ error: 'Wallet address is required and must be a string' });
     }
 
-    address = address.trim(); // Ensure there are no leading/trailing spaces
+    address = address.trim();
 
-    // Check if user already exists
     let user = await User.findOne({ address });
 
     if (user) {
@@ -26,7 +20,6 @@ router.post('/', async (req, res) => {
       return res.json(user);
     }
 
-    // Create new user
     user = await User.create({ address });
     logger.info(`New user created: ${address}`);
 
@@ -35,19 +28,17 @@ router.post('/', async (req, res) => {
     logger.error('Failed to create/update user:', error);
     res.status(500).json({ error: 'Failed to create/update user' });
   }
-});
+};
 
-// Get user by address
-router.get('/:address', async (req, res) => {
+export const getUserByAddress = async (req: Request, res: Response) => {
   try {
     let { address } = req.params;
 
-    // Trim and validate address
     if (!address || typeof address !== 'string') {
       return res.status(400).json({ error: 'Valid wallet address is required' });
     }
 
-    address = address.trim(); // Ensure there are no leading/trailing spaces
+    address = address.trim();
 
     const user = await User.findOne({ address });
 
@@ -61,14 +52,12 @@ router.get('/:address', async (req, res) => {
     logger.error('Failed to get user by address:', error);
     res.status(500).json({ error: 'Failed to get user' });
   }
-});
+};
 
-// Get user by ID
-router.get('/id/:id', async (req, res) => {
+export const getUserById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
       logger.warn(`Invalid user ID format: ${id}`);
       return res.status(400).json({ error: 'Invalid user ID format' });
@@ -86,6 +75,4 @@ router.get('/id/:id', async (req, res) => {
     logger.error('Failed to get user by ID:', error);
     res.status(500).json({ error: 'Failed to get user by ID' });
   }
-});
-
-export default router;
+}; 
