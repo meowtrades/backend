@@ -1,12 +1,12 @@
-import { DCAPlugin } from '../plugins/types';
-import { InjectivePlugin } from '../plugins/injective';
-import { TonPlugin } from '../plugins/ton';
-import { InvestmentPlan, IInvestmentPlan, RiskLevel } from '../models/InvestmentPlan';
-import { User, IUser } from '../models/User';
+import { DCAPlugin } from '../../chains/types';
+import { InjectivePlugin } from '../../chains/injective';
+import { TonPlugin } from '../../chains/ton';
+import { InvestmentPlan, IInvestmentPlan, RiskLevel } from '../../../../models/InvestmentPlan';
+import { User, IUser } from '../../../../models/User';
 import cron from 'node-cron';
-import { logger } from '../utils/logger';
-import { analyzeTokenPrice, getRiskMultiplier } from './PriceAnalysisService';
-import { PluginFactory } from '../plugins/pluginFactory/pluginFactory';
+import { logger } from '../../../../utils/logger';
+import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
+import { PluginFactory } from '../../chains/factory';
 
 export class DCAService {
   private plugin: DCAPlugin;

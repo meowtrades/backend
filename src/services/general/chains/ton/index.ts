@@ -1,4 +1,4 @@
-import { DCAPlugin } from "./types";
+import { DCAPlugin } from "../types";
 import { TonClient } from "@ton/ton";
 
 export class TonPlugin implements DCAPlugin {

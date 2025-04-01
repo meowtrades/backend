@@ -1,7 +1,7 @@
 import express from 'express';
-import { DCAService } from '../services/DCAService';
-import { logger } from '../utils/logger';
-import { RiskLevel } from '../models/InvestmentPlan';
+import { DCAService } from '../../../services/general/services/dca';
+import { logger } from '../../../utils/logger';
+import { RiskLevel } from '../../../models/InvestmentPlan';
 
 const router = express.Router();
 const dcaService = new DCAService();

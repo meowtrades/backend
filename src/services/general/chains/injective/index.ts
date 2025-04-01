@@ -13,10 +13,10 @@ import {
 import { BigNumberInBase } from "@injectivelabs/utils";
 import { DEFAULT_BLOCK_TIMEOUT_HEIGHT } from "@injectivelabs/utils";
 import { ChainId } from "@injectivelabs/ts-types";
-import { DCAPlugin } from "./types";
+import { DCAPlugin } from "../types";
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import dotenv from 'dotenv';
-import { logger } from '../utils/logger';
+import { logger } from '../../../../utils/logger';
 dotenv.config();
 
 export class InjectivePlugin implements DCAPlugin {

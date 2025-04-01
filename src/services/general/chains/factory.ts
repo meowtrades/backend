@@ -1,7 +1,7 @@
-import { DCAPlugin } from '../types';
-import { TonPlugin } from '../ton';
-import { InjectivePlugin } from '../injective';
-import { SonicPlugin } from '../sonic';
+import { DCAPlugin } from './types';
+import { TonPlugin } from './ton';
+import { InjectivePlugin } from './injective';
+import { SonicPlugin } from './sonic';
 
 export class PluginFactory {
   private static plugins: Map<string, () => DCAPlugin> = new Map();
