@@ -30,7 +30,7 @@ export class SonicPlugin implements DCAPlugin {
     async sendTransaction(
         amount: number,
         fromAddress: string,
-        toAddress: string,
+        userWalletAddress: string,
         options: { slippageTolerance?: number } = {}
     ): Promise<string> {
         try {

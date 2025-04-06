@@ -1,13 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUser extends Document {
+  userId: string;
   address: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const UserSchema: Schema = new Schema({
-  address: { type: String, required: true, unique: true },
+  userId: { type: String, required: true, unique: true },
+  address: { type: String, required: true },
 }, {
   timestamps: true
 });

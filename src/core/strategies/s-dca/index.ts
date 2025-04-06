@@ -1,10 +1,11 @@
-import { DCAPlugin } from '../../types';
-import { InvestmentPlan, IInvestmentPlan, RiskLevel } from '../../../models/InvestmentPlan';
+import { DCAPlugin, Frequency } from '../../types';
+import { InvestmentPlan, IInvestmentPlan } from '../../../models/InvestmentPlan';
 import { User } from '../../../models/User';
 import cron from 'node-cron';
 import { logger } from '../../../utils/logger';
 import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
 import { PluginFactory } from "./chains/factory";
+import { RiskLevel } from '../../types';
 
 export class DCAService {
   private plugins: Map<string, DCAPlugin>;
@@ -13,6 +14,7 @@ export class DCAService {
   constructor() {
     this.plugins = new Map();
     this.cronJobs = new Map();
+    logger.info('DCAService initialized, starting to initialize existing plans');
     this.initializeExistingPlans();
   }
 
@@ -28,7 +30,24 @@ export class DCAService {
   private async initializeExistingPlans() {
     try {
       const activePlans = await InvestmentPlan.find({ isActive: true });
-      activePlans.forEach(plan => this.schedulePlan(plan));
+      for (const plan of activePlans) {
+        try {
+          const user = await User.findOne({ userId: plan.userId });
+          if (!user) {
+            // If user doesn't exist, deactivate the plan
+            plan.isActive = false;
+            await plan.save();
+            logger.warn(`Deactivated plan ${plan._id} because associated user ${plan.userId} not found`);
+            continue;
+          }
+          this.schedulePlan(plan);
+        } catch (error) {
+          logger.error(`Failed to initialize plan ${plan._id}:`, error);
+          // Deactivate the plan if there's an error
+          plan.isActive = false;
+          await plan.save();
+        }
+      }
     } catch (error) {
       logger.error('Failed to initialize existing plans:', error);
     }
@@ -36,31 +55,44 @@ export class DCAService {
 
   private getCronExpression(frequency: string): string {
     switch (frequency) {
-      case 'minute':
-        return '* * * * *';
-      case 'hour':
-        return '0 * * * *';
-      case 'day':
+      case Frequency.DAILY:
         return '0 0 * * *';
+      case Frequency.WEEKLY:
+        return '0 0 * * 0'; // Every Sunday at midnight
+      case Frequency.MONTHLY:
+        return '0 0 1 * *'; // First day of every month at midnight
+      case Frequency.TEST_MINUTE: // Use the enum value
+        return '* * * * *'; // Every minute
+      case Frequency.TEST_10_SECONDS:
+        return '*/10 * * * * *'; // Every 10 seconds
       default:
-        throw new Error('Invalid frequency');
+        // Check if the frequency exists in the enum before throwing an error
+        if (Object.values(Frequency).includes(frequency as Frequency)) {
+           throw new Error(`Cron expression not defined for frequency: ${frequency}`);
+        }
+        throw new Error(`Invalid frequency: ${frequency}`);
     }
   }
 
   private async executePlan(plan: IInvestmentPlan) {
     try {
-      const user = await User.findById(plan.userId);
+      logger.info(`Starting execution for plan ${plan._id}`);
+      const user = await User.findOne({ userId: plan.userId });
       if (!user) {
         throw new Error('User not found');
       }
+      logger.info(`Found user ${user._id} for plan ${plan._id}`);
 
       // Get the execution amount
       let executionAmount = plan.amount;
+      logger.info(`Initial execution amount for plan ${plan._id}: ${executionAmount}`);
 
       // If this is not the first execution, apply risk-based strategy
       if (plan.executionCount > 0) {
+        logger.info(`Plan ${plan._id} has previous executions (count: ${plan.executionCount}), applying risk strategy`);
         // Get price analysis for token based on chain
         const analysis = await analyzeTokenPrice(plan.chain);
+        logger.info(`Price analysis for plan ${plan._id}:`, analysis);
         
         // Get risk multiplier based on user's selected risk level
         const riskMultiplier = getRiskMultiplier(plan.riskLevel as RiskLevel);
@@ -88,13 +120,18 @@ export class DCAService {
       }
 
       // Get the appropriate plugin for this chain
+      logger.info(`Getting plugin for chain ${plan.chain}`);
       const plugin = this.getPlugin(plan.chain);
 
       // Execute the transaction with the calculated amount
+      logger.info(`Sending transaction for plan ${plan._id}:
+        Amount: ${executionAmount}
+        From: ${user.address}
+        To: ${plan.userWalletAddress}`);
       const txHash = await plugin.sendTransaction(
         executionAmount,
         user.address,
-        plan.toAddress
+        plan.userWalletAddress
       );
 
       // Update plan data
@@ -111,20 +148,26 @@ export class DCAService {
 
       logger.info(`Successfully executed DCA plan: ${plan._id}, txHash: ${txHash}, amount: ${executionAmount}`);
     } catch (error) {
-      logger.error(`Failed to execute DCA plan: ${plan._id}`, error);
+      logger.error(`Failed to execute plan ${plan._id}:`, error);
     }
   }
 
   private schedulePlan(plan: IInvestmentPlan) {
-    const cronExpression = this.getCronExpression(plan.frequency);
-    const job = cron.schedule(cronExpression, () => this.executePlan(plan));
-    this.cronJobs.set(plan._id.toString(), job);
+    try {
+      const cronExpression = this.getCronExpression(plan.frequency);
+      logger.info(`Scheduling plan ${plan._id} with cron expression: ${cronExpression}`);
+      const job = cron.schedule(cronExpression, () => this.executePlan(plan));
+      this.cronJobs.set(plan._id.toString(), job);
+      logger.info(`Successfully scheduled plan ${plan._id}`);
+    } catch (error) {
+      logger.error(`Failed to schedule plan ${plan._id}:`, error);
+    }
   }
 
   async createPlan(userId: string, planData: {
     amount: number;
     frequency: string;
-    toAddress: string;
+    userWalletAddress: string;
     riskLevel: RiskLevel;
     chain: string;
   }): Promise<IInvestmentPlan> {
@@ -183,6 +226,30 @@ export class DCAService {
         job.stop();
         this.cronJobs.delete(planId);
       }
+    }
+  }
+
+  async stopAllUserPlans(userId: string): Promise<number> {
+    try {
+      const plans = await InvestmentPlan.find({ userId, isActive: true });
+      let stoppedCount = 0;
+
+      for (const plan of plans) {
+        plan.isActive = false;
+        await plan.save();
+
+        const job = this.cronJobs.get(plan._id.toString());
+        if (job) {
+          job.stop();
+          this.cronJobs.delete(plan._id.toString());
+        }
+        stoppedCount++;
+      }
+
+      return stoppedCount;
+    } catch (error) {
+      logger.error(`Failed to stop all plans for user ${userId}:`, error);
+      throw error;
     }
   }
 }

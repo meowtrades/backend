@@ -17,7 +17,7 @@ export class MockPlugin implements DCAPlugin {
     async sendTransaction(
         amount: number,
         fromAddress: string,
-        toAddress: string
+        userWalletAddress: string
     ): Promise<string> {
         try {
             // Generate a mock transaction hash
@@ -26,7 +26,7 @@ export class MockPlugin implements DCAPlugin {
             // Record the transaction
             this.transactions.push({
                 from: fromAddress,
-                to: toAddress,
+                to: userWalletAddress,
                 amount: amount,
                 timestamp: new Date()
             });
@@ -34,7 +34,7 @@ export class MockPlugin implements DCAPlugin {
             // Update balances
             this.updateBalance(fromAddress, -amount, 'usdt');
             
-            logger.info(`Mock transaction executed: ${amount} from ${fromAddress} to ${toAddress}`);
+            logger.info(`Mock transaction executed: ${amount} from ${fromAddress} to ${userWalletAddress}`);
             logger.info(`Transaction hash: ${txHash}`);
             
             return txHash;

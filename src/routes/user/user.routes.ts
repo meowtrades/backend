@@ -8,9 +8,9 @@ const router = express.Router();
 router.post('/', createOrUpdateUser);
 
 // Get user by address
-router.get('/:address', getUserByAddress);
+router.get('/address/:address', getUserByAddress);
 
 // Get user by ID
-router.get('/id/:id', getUserById);
+router.get('/:userId', getUserById);
 
 export default router;

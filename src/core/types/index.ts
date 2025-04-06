@@ -5,4 +5,27 @@ export interface DCAPlugin {
   getNativeBalance(address: string): Promise<number>;
 }
 
-export type SupportedPlugins = 'injective' | 'ton'; 
+export enum SupportedDCAChains {
+  INJ = 'injective',
+  APTOS = 'aptos',
+  SONIC = 'sonic'
+}
+
+export enum RiskLevel {
+  NO_RISK = 'no_risk',
+  LOW_RISK = 'low_risk',
+  MEDIUM_RISK = 'medium_risk',
+  HIGH_RISK = 'high_risk'
+}
+
+export enum Frequency {
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  TEST_MINUTE = 'test_minute',
+  TEST_10_SECONDS = 'test_10_seconds'
+}
+
+export interface ITransactionService {
+  sendTransaction(amount: number, fromAddress: string, userWalletAddress: string): Promise<string>;
+}

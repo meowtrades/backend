@@ -8,7 +8,6 @@ import {
     PrivateKey,
     ChainGrpcBankApi,
     TxRestApi,
-    CosmosTxV1Beta1Tx
 } from "@injectivelabs/sdk-ts";
 import { BigNumberInBase } from "@injectivelabs/utils";
 import { DEFAULT_BLOCK_TIMEOUT_HEIGHT } from "@injectivelabs/utils";
@@ -46,7 +45,7 @@ export class InjectivePlugin implements DCAPlugin {
     async sendTransaction(
         amount: number,
         fromAddress: string,
-        toAddress: string
+        userWalletAddress: string
     ): Promise<string> {
         try {
             // Using private key from environment variables
@@ -60,7 +59,7 @@ export class InjectivePlugin implements DCAPlugin {
             const walletAddress = privateKey.toBech32();
             
             logger.info(`Using wallet address: ${walletAddress}`);
-            logger.info(`Sending swapped tokens to: ${toAddress}`);
+            logger.info(`Sending swapped tokens to: ${userWalletAddress}`);
             logger.info(`Swap amount: ${amount} USDT`);
 
             // For this implementation, we'll swap USDT to INJ
@@ -138,8 +137,8 @@ export class InjectivePlugin implements DCAPlugin {
                 logger.info(`Swap transaction successful: ${txResponse.txHash}`);
                 
                 // After swap is complete, send INJ to desired address if different from wallet
-                if (toAddress !== walletAddress) {
-                    logger.info(`Transferring swapped tokens to ${toAddress}`);
+                if (userWalletAddress !== walletAddress) {
+                    logger.info(`Transferring swapped tokens to ${userWalletAddress}`);
                     
                     // Wait a bit for the swap transaction to be processed
                     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -155,7 +154,7 @@ export class InjectivePlugin implements DCAPlugin {
                         return txResponse.txHash;
                     }
                     
-                    logger.info(`Sending ${amountToSend} INJ to ${toAddress}`);
+                    logger.info(`Sending ${amountToSend} INJ to ${userWalletAddress}`);
                     
                     // Convert to base units (INJ has 18 decimals)
                     const sendAmountInBaseUnits = new BigNumberInBase(amountToSend)
@@ -180,7 +179,7 @@ export class InjectivePlugin implements DCAPlugin {
                     const sendMsg = MsgSend.fromJSON({
                         amount: amountInToken,
                         srcInjectiveAddress: walletAddress,
-                        dstInjectiveAddress: toAddress,
+                        dstInjectiveAddress: userWalletAddress,
                     });
                     
                     // STEP 4: Prepare the transfer transaction

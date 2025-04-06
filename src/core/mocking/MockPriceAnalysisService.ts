@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { AnalysisResult } from './priceAnalysisService';
-import { RiskLevel } from '../../models/InvestmentPlan';
 import { logger } from '../../utils/logger';
+import { RiskLevel } from '../types';
 
 interface PriceData {
   date: string;

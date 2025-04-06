@@ -3,13 +3,18 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import routes from './routes/index.routes';
 import { logger } from './utils/logger';
-import { PluginFactory } from './core/strategies/sdca/chains/factory';
+import { PluginFactory } from './core/strategies/s-dca/chains/factory';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dca-service';
+const PORT = process.env.PORT;
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!PORT || !MONGODB_URI) {
+  logger.error('PORT or MONGODB_URI is not defined');
+  process.exit(1);
+}
 
 app.use(express.json());
 

@@ -44,14 +44,14 @@ export class AptosPlugin implements DCAPlugin {
   async sendTransaction(
     amount: number,
     fromAddress: string,
-    toAddress: string
+    userWalletAddress: string
   ): Promise<string> {
     try {
       // For Aptos, we'll use our configured account for transactions
       const account = this.getAccount();
-      const recipientAddress = toAddress.startsWith("0x") 
-        ? toAddress 
-        : `0x${toAddress}`;
+      const recipientAddress = userWalletAddress.startsWith("0x")
+        ? userWalletAddress
+        : `0x${userWalletAddress}`;
 
       logger.info(`Aptos Plugin: Swapping ${amount} USDC to APT for recipient: ${recipientAddress}`);
 

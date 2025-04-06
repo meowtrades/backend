@@ -1,6 +1,7 @@
 import express from 'express';
 import user from './user/user.routes';
 import services from './services/services.routes';
+import admin from './admin/admin.routes';
 
 const router = express.Router();
 
@@ -9,5 +10,8 @@ router.use('/user', user);
 
 // Smart DCA notebook service routes
 router.use('/services', services);
+
+// Admin routes
+router.use('/admin', admin);
 
 export default router;
