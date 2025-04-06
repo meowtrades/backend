@@ -1,8 +1,8 @@
 import axios from 'axios';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
-import { logger } from '../../../../utils/logger';
-import { RiskLevel } from '../../../../models/InvestmentPlan';
+import { logger } from '../../../utils/logger';
+import { RiskLevel } from '../../../models/InvestmentPlan';
 
 dotenv.config();
 
@@ -24,6 +24,13 @@ export interface AnalysisResult {
   priceFactor: number;
   isPriceGoingUp: boolean;
 }
+
+// Add chain to token ID mapping
+const CHAIN_TO_TOKEN_ID: Record<string, string> = {
+  'injective': 'injective-protocol',
+  'aptos': 'aptos',
+  'sonic': 'sonic-svm'
+};
 
 async function fetchHistoricalPrices(tokenId: string, days: number = 30): Promise<PriceData[]> {
   try {
@@ -89,8 +96,14 @@ function calculatePriceChangePercentage(prices: PriceData[]): number {
   return percentageChange;
 }
 
-export async function analyzeTokenPrice(tokenId: string = 'sonic-svm'): Promise<AnalysisResult> {
+export async function analyzeTokenPrice(chain: string): Promise<AnalysisResult> {
   try {
+    // Get token ID based on chain
+    const tokenId = CHAIN_TO_TOKEN_ID[chain];
+    if (!tokenId) {
+      throw new Error(`Unsupported chain: ${chain}`);
+    }
+
     // Fetch historical price data with extra days to ensure we have enough data points
     const priceData = await fetchHistoricalPrices(tokenId, 31);
     
@@ -103,7 +116,7 @@ export async function analyzeTokenPrice(tokenId: string = 'sonic-svm'): Promise<
     
     // Use OpenAI to analyze the data and provide a factor between 0-1 or 1-2
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4",
       messages: [
         {
           role: "system",

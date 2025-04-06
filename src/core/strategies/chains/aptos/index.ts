@@ -1,8 +1,8 @@
 import { AptosClient, AptosAccount } from "aptos";
 import dotenv from "dotenv";
-import { logger } from '../../../../../utils/logger';
-import { DCAPlugin } from "../../../../types";
-import { APTOS_CONSTANTS } from '../../../../../constants';
+import { logger } from '../../../../utils/logger';
+import { DCAPlugin } from "../../../types";
+import { APTOS_CONSTANTS } from '../../../../constants';
 
 dotenv.config();
 
@@ -15,7 +15,10 @@ export class AptosPlugin implements DCAPlugin {
 
   constructor() {
     // Use testnet by default, can be overridden by environment variable
-    const nodeUrl = process.env.APTOS_NODE_URL || "https://fullnode.testnet.aptoslabs.com";
+    const nodeUrl = process.env.APTOS_NODE_URL;
+    if (!nodeUrl) {
+      throw new Error("APTOS_NODE_URL not found in environment variables");
+    } 
     this.client = new AptosClient(nodeUrl);
 
     // Initialize addresses from constants

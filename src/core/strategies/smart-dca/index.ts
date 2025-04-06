@@ -1,21 +1,28 @@
-import { DCAPlugin } from '../../../types';
-import { InvestmentPlan, IInvestmentPlan, RiskLevel } from '../../../../models/InvestmentPlan';
-import { User } from '../../../../models/User';
+import { DCAPlugin } from '../../types';
+import { InvestmentPlan, IInvestmentPlan, RiskLevel } from '../../../models/InvestmentPlan';
+import { User } from '../../../models/User';
 import cron from 'node-cron';
-import { logger } from '../../../../utils/logger';
+import { logger } from '../../../utils/logger';
 import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
 import { PluginFactory } from "../chains/factory";
 
 export class DCAService {
-  private plugin: DCAPlugin;
+  private plugins: Map<string, DCAPlugin>;
   private cronJobs: Map<string, cron.ScheduledTask>;
 
   constructor() {
-    const pluginName = process.env.BLOCKCHAIN_PLUGIN || '';
-    console.log("plugin name",pluginName)
-    this.plugin = PluginFactory.getPlugin(pluginName);
+    this.plugins = new Map();
     this.cronJobs = new Map();
     this.initializeExistingPlans();
+  }
+
+  private getPlugin(chain: string): DCAPlugin {
+    let plugin = this.plugins.get(chain);
+    if (!plugin) {
+      plugin = PluginFactory.getPlugin(chain);
+      this.plugins.set(chain, plugin);
+    }
+    return plugin;
   }
 
   private async initializeExistingPlans() {
@@ -52,8 +59,8 @@ export class DCAService {
 
       // If this is not the first execution, apply risk-based strategy
       if (plan.executionCount > 0) {
-        // Get price analysis for Injective token
-        const analysis = await analyzeTokenPrice('injective-protocol');
+        // Get price analysis for token based on chain
+        const analysis = await analyzeTokenPrice(plan.chain);
         
         // Get risk multiplier based on user's selected risk level
         const riskMultiplier = getRiskMultiplier(plan.riskLevel as RiskLevel);
@@ -80,8 +87,11 @@ export class DCAService {
           Random Component: ${randomNumber}, Final Amount: ${executionAmount}`);
       }
 
+      // Get the appropriate plugin for this chain
+      const plugin = this.getPlugin(plan.chain);
+
       // Execute the transaction with the calculated amount
-      const txHash = await this.plugin.sendTransaction(
+      const txHash = await plugin.sendTransaction(
         executionAmount,
         user.address,
         plan.toAddress
@@ -116,7 +126,11 @@ export class DCAService {
     frequency: string;
     toAddress: string;
     riskLevel: RiskLevel;
+    chain: string;
   }): Promise<IInvestmentPlan> {
+    // Validate that the chain plugin exists
+    this.getPlugin(planData.chain);
+
     const plan = await InvestmentPlan.create({
       userId,
       ...planData,

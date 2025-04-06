@@ -13,11 +13,11 @@ import {
 import { BigNumberInBase } from "@injectivelabs/utils";
 import { DEFAULT_BLOCK_TIMEOUT_HEIGHT } from "@injectivelabs/utils";
 import { ChainId } from "@injectivelabs/ts-types";
-import { DCAPlugin } from "../../../../types";
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import dotenv from 'dotenv';
-import { logger } from '../../../../../utils/logger';
-import { INJECTIVE_CONSTANTS } from '../../../../../constants';
+import { DCAPlugin } from "../../../types";
+import { logger } from '../../../../utils/logger';
+import { INJECTIVE_CONSTANTS } from '../../../../constants';
 
 dotenv.config();
 
@@ -49,14 +49,14 @@ export class InjectivePlugin implements DCAPlugin {
         toAddress: string
     ): Promise<string> {
         try {
-            // Using mnemonic instead of private key
-            const mnemonic = process.env.MNEMONIC_INJECTIVE;
-            if (!mnemonic) {
-                throw new Error("Mnemonic not found in environment variables (MNEMONIC_INJECTIVE)");
+            // Using private key from environment variables
+            const privateKeyHex = process.env.PRIVATE_KEY_INJECTIVE;
+            if (!privateKeyHex) {
+                throw new Error("Private key not found in environment variables (PRIVATE_KEY_INJECTIVE)");
             }
 
-            // Create private key from mnemonic
-            const privateKey = PrivateKey.fromMnemonic(mnemonic);
+            // Create private key from hex string
+            const privateKey = PrivateKey.fromHex(privateKeyHex);
             const walletAddress = privateKey.toBech32();
             
             logger.info(`Using wallet address: ${walletAddress}`);

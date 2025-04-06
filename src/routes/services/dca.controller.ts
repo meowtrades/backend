@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { DCAService } from '../../core/strategies/basic/smart-dca';
+import { DCAService } from '../../core/strategies/smart-dca';
 import { logger } from '../../utils/logger';
 import { RiskLevel } from '../../models/InvestmentPlan';
 
@@ -7,9 +7,9 @@ const dcaService = new DCAService();
 
 export const createPlan = async (req: Request, res: Response) => {
   try {
-    const { userId, amount, frequency, toAddress, riskLevel } = req.body;
+    const { userId, amount, frequency, toAddress, riskLevel, chain } = req.body;
     
-    if (!userId || !amount || !frequency || !toAddress) {
+    if (!userId || !amount || !frequency || !toAddress || !chain) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -18,14 +18,21 @@ export const createPlan = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid risk level' });
     }
 
-    const plan = await dcaService.createPlan(userId, {
-      amount,
-      frequency,
-      toAddress,
-      riskLevel: riskLevel || RiskLevel.NO_RISK
-    });
-
-    res.json(plan);
+    try {
+      const plan = await dcaService.createPlan(userId, {
+        amount,
+        frequency,
+        toAddress,
+        chain,
+        riskLevel: riskLevel || RiskLevel.NO_RISK
+      });
+      res.json(plan);
+    } catch (error: any) {
+      if (error.message?.includes('Plugin') || error.message?.includes('not found')) {
+        return res.status(400).json({ error: `Invalid chain: ${chain}` });
+      }
+      throw error;
+    }
   } catch (error) {
     logger.error('Failed to create DCA plan:', error);
     res.status(500).json({ error: 'Failed to create DCA plan' });

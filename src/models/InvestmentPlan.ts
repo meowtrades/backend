@@ -21,6 +21,7 @@ export interface IInvestmentPlan extends Document {
   executionCount: number;
   initialAmount: number;
   riskLevel: RiskLevel;
+  chain: string;
 }
 
 const InvestmentPlanSchema: Schema = new Schema({
@@ -42,7 +43,8 @@ const InvestmentPlanSchema: Schema = new Schema({
     enum: Object.values(RiskLevel),
     default: RiskLevel.NO_RISK,
     required: true 
-  }
+  },
+  chain: { type: String, required: true }
 }, {
   timestamps: true
 });
