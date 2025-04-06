@@ -1,4 +1,4 @@
-import { DCAPlugin } from './types';
+import { DCAPlugin } from '../../../types';
 import { TonPlugin } from './ton';
 import { InjectivePlugin } from './injective';
 import { SonicPlugin } from './sonic';

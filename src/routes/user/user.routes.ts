@@ -1,6 +1,6 @@
 // src/routes/user.ts
 import express from 'express';
-import { createOrUpdateUser, getUserByAddress, getUserById } from '../../controllers/user.controller';
+import { createOrUpdateUser, getUserByAddress, getUserById } from './user.controller';
 
 const router = express.Router();
 

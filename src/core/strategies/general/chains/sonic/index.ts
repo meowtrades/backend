@@ -1,4 +1,4 @@
-import { DCAPlugin } from "../types";
+import { DCAPlugin } from "../../../../types";
 import { 
     Connection, 
     PublicKey, 
@@ -14,7 +14,7 @@ import {
     transfer 
 } from '@solana/spl-token';
 import dotenv from 'dotenv';
-import { logger } from '../../../../utils/logger';
+import { logger } from '../../../../../utils/logger';
 import bs58 from 'bs58';
 
 dotenv.config();

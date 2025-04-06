@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { User } from '../models/User';
-import { logger } from '../utils/logger';
+import { User } from '../../models/User';
+import { logger } from '../../utils/logger';
 import mongoose from 'mongoose';
 
 export const createOrUpdateUser = async (req: Request, res: Response) => {

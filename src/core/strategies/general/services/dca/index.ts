@@ -1,10 +1,10 @@
-import { DCAPlugin } from '../../chains/types';
+import { DCAPlugin } from '../../../../types';
 import { InjectivePlugin } from '../../chains/injective';
 import { TonPlugin } from '../../chains/ton';
-import { InvestmentPlan, IInvestmentPlan, RiskLevel } from '../../../../models/InvestmentPlan';
-import { User, IUser } from '../../../../models/User';
+import { InvestmentPlan, IInvestmentPlan, RiskLevel } from '../../../../../models/InvestmentPlan';
+import { User, IUser } from '../../../../../models/User';
 import cron from 'node-cron';
-import { logger } from '../../../../utils/logger';
+import { logger } from '../../../../../utils/logger';
 import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
 import { PluginFactory } from '../../chains/factory';
 

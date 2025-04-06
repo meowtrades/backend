@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { DCAService } from '../../services/general/services/dca';
+import { DCAService } from '../../core/strategies/general/services/dca';
 import { logger } from '../../utils/logger';
 import { RiskLevel } from '../../models/InvestmentPlan';
 

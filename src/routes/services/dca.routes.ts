@@ -1,5 +1,5 @@
 import express from 'express';
-import { createPlan, stopPlan, getUserPlans, getUserTotalInvestment } from '../../controllers/services/dca.controller';
+import { createPlan, stopPlan, getUserPlans, getUserTotalInvestment } from './dca.controller';
 
 const router = express.Router();
 
