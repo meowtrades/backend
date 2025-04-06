@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { DCAService } from '../../core/strategies/smart-dca';
-import { logger } from '../../utils/logger';
-import { RiskLevel } from '../../models/InvestmentPlan';
+import { DCAService } from '../../../core/strategies/sdca';
+import { logger } from '../../../utils/logger';
+import { RiskLevel } from '../../../models/InvestmentPlan';
 
 const dcaService = new DCAService();
 

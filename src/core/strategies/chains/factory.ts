@@ -1,7 +1,7 @@
 import { DCAPlugin } from '../../types';
-import { InjectivePlugin } from './injective';
-import { AptosPlugin } from './aptos';
-import { SonicPlugin } from './sonic';
+import { InjectivePlugin } from './injective.chains';
+import { AptosPlugin } from './aptos.chains';
+import { SonicPlugin } from './sonic.chains';
 
 export class PluginFactory {
   private static plugins: Map<string, () => DCAPlugin> = new Map();

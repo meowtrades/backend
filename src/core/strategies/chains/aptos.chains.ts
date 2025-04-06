@@ -1,8 +1,8 @@
 import { AptosClient, AptosAccount } from "aptos";
 import dotenv from "dotenv";
-import { logger } from '../../../../utils/logger';
-import { DCAPlugin } from "../../../types";
-import { APTOS_CONSTANTS } from '../../../../constants';
+import { logger } from '../../../utils/logger';
+import { DCAPlugin } from "../../types";
+import { APTOS_CONSTANTS } from '../../../constants';
 
 dotenv.config();
 
