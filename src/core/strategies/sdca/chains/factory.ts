@@ -1,4 +1,4 @@
-import { DCAPlugin } from '../../types';
+import { DCAPlugin } from '../../../types';
 import { InjectivePlugin } from './injective.chains';
 import { AptosPlugin } from './aptos.chains';
 import { SonicPlugin } from './sonic.chains';
@@ -18,9 +18,11 @@ export class PluginFactory {
     }
     return plugin();
   }
-}
 
-// Register plugins dynamically
-PluginFactory.registerPlugin('injective', () => new InjectivePlugin());
-PluginFactory.registerPlugin('aptos', () => new AptosPlugin());
-PluginFactory.registerPlugin('sonic', () => new SonicPlugin());
+  static initializePlugins() {
+    // Register all available plugins
+    PluginFactory.registerPlugin('injective', () => new InjectivePlugin());
+    PluginFactory.registerPlugin('aptos', () => new AptosPlugin());
+    PluginFactory.registerPlugin('sonic', () => new SonicPlugin());
+  }
+}

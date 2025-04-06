@@ -4,7 +4,7 @@ import { User } from '../../../models/User';
 import cron from 'node-cron';
 import { logger } from '../../../utils/logger';
 import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
-import { PluginFactory } from "../chains/factory";
+import { PluginFactory } from "./chains/factory";
 
 export class DCAService {
   private plugins: Map<string, DCAPlugin>;
@@ -171,5 +171,18 @@ export class DCAService {
       { $group: { _id: null, total: { $sum: '$totalInvested' } } }
     ]);
     return result.length > 0 ? result[0].total : 0;
+  }
+
+  async emergencyStop(planId: string): Promise<void> {
+    const plan = await InvestmentPlan.findById(planId);
+    if (plan) {
+      plan.isActive = false;
+      await plan.save();
+      const job = this.cronJobs.get(planId);
+      if (job) {
+        job.stop();
+        this.cronJobs.delete(planId);
+      }
+    }
   }
 }

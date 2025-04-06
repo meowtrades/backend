@@ -9,15 +9,15 @@ import {
 const router = express.Router();
 
 // Create a new DCA plan
-router.post("/plans", createPlan);
+router.post("/create-plan", createPlan);
 
 // Stop a DCA plan
-router.post("/plans/:planId/stop", stopPlan);
+router.post("/stop-plan/:planId", stopPlan);
 
 // Get user's plans
-router.get("/users/:userId/plans", getUserPlans);
+router.get("/plans/:userId", getUserPlans);
 
 // Get user's total investment
-router.get("/users/:userId/total-investment", getUserTotalInvestment);
+router.get("/total-investment/:userId", getUserTotalInvestment);
 
 export default router;

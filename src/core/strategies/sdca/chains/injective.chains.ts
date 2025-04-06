@@ -15,9 +15,9 @@ import { DEFAULT_BLOCK_TIMEOUT_HEIGHT } from "@injectivelabs/utils";
 import { ChainId } from "@injectivelabs/ts-types";
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import dotenv from 'dotenv';
-import { DCAPlugin } from "../../types";
-import { logger } from '../../../utils/logger';
-import { INJECTIVE_CONSTANTS } from '../../../constants';
+import { DCAPlugin } from "../../../types";
+import { logger } from '../../../../utils/logger';
+import { INJECTIVE_CONSTANTS } from '../../../../constants';
 
 dotenv.config();
 
