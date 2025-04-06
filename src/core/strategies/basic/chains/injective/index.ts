@@ -17,13 +17,15 @@ import { DCAPlugin } from "../../../../types";
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import dotenv from 'dotenv';
 import { logger } from '../../../../../utils/logger';
+import { INJECTIVE_CONSTANTS } from '../../../../../constants';
+
 dotenv.config();
 
 export class InjectivePlugin implements DCAPlugin {
     name = "injective";
-    private readonly CONTRACT_ADDRESS = 'inj1wdx4lnl4amctfgwgujhepf7tjn3ygk37a3sgfj';
-    private readonly USDT_DENOM = 'peggy0x87aB3B4C8661e07D6372361211B96ed4Dc36B1B5';
-    private readonly INJ_DENOM = 'inj';
+    private readonly CONTRACT_ADDRESS: string;
+    private readonly USDT_DENOM: string;
+    private readonly INJ_DENOM: string;
     private readonly restEndpoint: string;
     private readonly grpcEndpoint: string;
     private readonly chainId: string;
@@ -34,6 +36,11 @@ export class InjectivePlugin implements DCAPlugin {
         this.restEndpoint = endpoints.rest;
         this.grpcEndpoint = endpoints.grpc;
         this.chainId = ChainId.Testnet;
+        
+        // Initialize addresses from constants
+        this.CONTRACT_ADDRESS = INJECTIVE_CONSTANTS.CONTRACT_ADDRESS;
+        this.USDT_DENOM = INJECTIVE_CONSTANTS.USDT_DENOM;
+        this.INJ_DENOM = INJECTIVE_CONSTANTS.INJ_DENOM;
     }
 
     async sendTransaction(

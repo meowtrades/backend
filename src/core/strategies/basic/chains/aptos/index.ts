@@ -1,21 +1,27 @@
-import { AptosClient, AptosAccount, TxnBuilderTypes, BCS } from "aptos";
+import { AptosClient, AptosAccount } from "aptos";
 import dotenv from "dotenv";
 import { logger } from '../../../../../utils/logger';
 import { DCAPlugin } from "../../../../types";
+import { APTOS_CONSTANTS } from '../../../../../constants';
 
 dotenv.config();
 
 export class AptosPlugin implements DCAPlugin {
   name = "aptos";
-  private readonly CONTRACT_ADDRESS = "0xa5d3ac4d429052674ed38adc62d010e52d7c24ca159194d17ddc196ddb7e480b";
-  private readonly USDC_ADDRESS = "0x498d8926f16eb9ca90cab1b3a26aa6f97a080b3fcbe6e83ae150b7243a00fb68::devnet_coins::DevnetUSDC";
-  private readonly APT_ADDRESS = "0x1::aptos_coin::AptosCoin";
+  private readonly CONTRACT_ADDRESS: string;
+  private readonly USDC_ADDRESS: string;
+  private readonly APT_ADDRESS: string;
   private readonly client: AptosClient;
 
   constructor() {
     // Use testnet by default, can be overridden by environment variable
     const nodeUrl = process.env.APTOS_NODE_URL || "https://fullnode.testnet.aptoslabs.com";
     this.client = new AptosClient(nodeUrl);
+
+    // Initialize addresses from constants
+    this.CONTRACT_ADDRESS = APTOS_CONSTANTS.CONTRACT_ADDRESS;
+    this.USDC_ADDRESS = APTOS_CONSTANTS.USDC_ADDRESS;
+    this.APT_ADDRESS = APTOS_CONSTANTS.APT_ADDRESS;
   }
 
   private getAccount(): AptosAccount {

@@ -1,8 +1,8 @@
 import axios from 'axios';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
-import { logger } from '../../../../../utils/logger';
-import { RiskLevel } from '../../../../../models/InvestmentPlan';
+import { logger } from '../../../../utils/logger';
+import { RiskLevel } from '../../../../models/InvestmentPlan';
 
 dotenv.config();
 

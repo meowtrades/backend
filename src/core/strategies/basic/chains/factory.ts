@@ -1,6 +1,6 @@
 import { DCAPlugin } from '../../../types';
-import { TonPlugin } from './ton';
 import { InjectivePlugin } from './injective';
+import { AptosPlugin } from './aptos';
 import { SonicPlugin } from './sonic';
 
 export class PluginFactory {
@@ -21,8 +21,6 @@ export class PluginFactory {
 }
 
 // Register plugins dynamically
-PluginFactory.registerPlugin('ton', () => new TonPlugin());
 PluginFactory.registerPlugin('injective', () => new InjectivePlugin());
+PluginFactory.registerPlugin('aptos', () => new AptosPlugin());
 PluginFactory.registerPlugin('sonic', () => new SonicPlugin());
-
-
