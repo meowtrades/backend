@@ -124,14 +124,12 @@ export class DCAService {
       const plugin = this.getPlugin(plan.chain);
 
       // Execute the transaction with the calculated amount
-      logger.info(`Sending transaction for plan ${plan._id}:
+      logger.info(`Sending swap transaction for plan ${plan._id}:
         Amount: ${executionAmount}
-        From: ${user.address}
-        To: ${plan.userWalletAddress}`);
-      const txHash = await plugin.sendTransaction(
+        From: ${user.address}`);
+      const txHash = await plugin.sendSwapTransaction(
         executionAmount,
-        user.address,
-        plan.userWalletAddress
+        user.address
       );
 
       // Update plan data
@@ -192,6 +190,21 @@ export class DCAService {
       return null;
     }
 
+    // Get the plugin for the chain
+    const plugin = this.getPlugin(plan.chain);
+    
+    // Get the user to get their wallet address
+    const user = await User.findOne({ userId: plan.userId });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Withdraw the total invested amount
+    if (plan.totalInvested > 0) {
+      await plugin.withdrawTokens(plan.totalInvested, user.address);
+    }
+
+    // Stop the plan
     plan.isActive = false;
     await plan.save();
 
@@ -251,5 +264,46 @@ export class DCAService {
       logger.error(`Failed to stop all plans for user ${userId}:`, error);
       throw error;
     }
+  }
+
+  async getUserCurrentPositions(userId: string): Promise<Array<{
+    planId: string;
+    chain: string;
+    nativeTokenAmount: number;
+    usdtValue: number;
+  }>> {
+    const plans = await InvestmentPlan.find({ userId });
+    const positions = [];
+
+    for (const plan of plans) {
+      try {
+        const plugin = this.getPlugin(plan.chain);
+        const user = await User.findOne({ userId: plan.userId });
+        
+        if (!user) {
+          logger.warn(`User not found for plan ${plan._id}`);
+          continue;
+        }
+
+        // Get native token balance
+        const nativeTokenAmount = await plugin.getNativeBalance(user.address);
+        
+        // Get current price of native token in USDT
+        const usdtValue = await plugin.getNativeTokenValueInUSDT(nativeTokenAmount);
+
+        positions.push({
+          planId: plan._id.toString(),
+          chain: plan.chain,
+          nativeTokenAmount,
+          usdtValue
+        });
+      } catch (error) {
+        logger.error(`Failed to get position for plan ${plan._id}:`, error);
+        // Continue with other plans even if one fails
+        continue;
+      }
+    }
+
+    return positions;
   }
 }

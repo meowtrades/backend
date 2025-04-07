@@ -6,13 +6,13 @@ const BASE_URL = 'http://localhost:8000'; // Update this with your actual server
 // Test data
 const testUserData = {
     userId: 'test-user-324', // Adding userId
-    address: 'inj1wu3ux6mxn2kzdhgf9x3x8c7dwm7g7dfxv2f3m0'
+    address: 'inj10l9jcspxdud6ujjy4k22nlksdree2w9mamcqep'
 };
 
 const testPlanData = {
     userId: 'test-user-123', // Adding userId to plan data as well
-    amount: 1,
-    userWalletAddress: 'inj1wu3ux6mxn2kzdhgf9x3x8c7dwm7g7dfxv2f3m0',
+    amount: 100,
+    userWalletAddress: 'inj10l9jcspxdud6ujjy4k22nlksdree2w9mamcqep',
     frequency: 'test_minute',
     chain: 'injective',
     riskLevel: 'no_risk'
@@ -124,38 +124,22 @@ export const stopAllPlansAdmin = async () => {
     }
 };
 
-export const stopAllPlansAtOnce = async () => {
+export const getAllActivePlansAdmin = async () => {
     try {
-        console.log('=== Stopping All Plans At Once ===');
-        
-        // 1. Stop via admin endpoint
-        console.log('1. Stopping via admin endpoint...');
-        await stopAllPlansAdmin();
-        
-        // 2. Verify all plans are stopped
-        console.log('2. Verifying all plans are stopped...');
-        const allPlans = await InvestmentPlan.find({ isActive: true });
-        if (allPlans.length > 0) {
-            console.warn(`Warning: ${allPlans.length} plans are still active after admin stop`);
-            // Try individual stops as fallback
-            console.log('3. Attempting individual plan stops...');
-            for (const plan of allPlans) {
-                try {
-                    await stopDcaPlan(plan._id.toString());
-                    console.log(`Successfully stopped plan ${plan._id}`);
-                } catch (error) {
-                    console.error(`Failed to stop plan ${plan._id}:`, error);
+        console.log('Getting all active plans via admin endpoint...');
+        const response = await axios.get(
+            `${BASE_URL}/api/admin/active-plans`,
+            {
+                headers: {
+                    'x-admin-token': '14-E'
                 }
             }
-        } else {
-            console.log('All plans successfully stopped');
-        }
-
-        console.log('=== All Plans Stop Operation Completed ===');
-        return { success: true, message: 'All plans stopped successfully' };
-    } catch (error) {
-        console.error('Failed to stop all plans:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        );
+        console.log('Active Plans Response:', response.data);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting active plans:', error.response?.data || error.message);
+        throw error;
     }
 };
 
@@ -167,7 +151,9 @@ export const stopAllPlansAtOnce = async () => {
         console.log("--- Starting Test Sequence ---");
 
         // // 0. Stop All Plans (Admin)
-        // await stopAllPlansAtOnce();
+        // await stopAllPlansAdmin();
+
+        // await getAllActivePlansAdmin();
 
         // 1. Create User
         // userId = await createUser();
@@ -186,7 +172,7 @@ export const stopAllPlansAtOnce = async () => {
         // }
 
         // // 3. Get User Plans
-        await getUserPlans(testUserData.userId);
+        // await getUserPlans(testUserData.userId);
 
         // // 4. Get Total Investment
         // await getTotalInvestment(testUserData.userId);

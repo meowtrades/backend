@@ -3,6 +3,8 @@ import { DCAService } from "../../../core/strategies/s-dca";
 import { logger } from "../../../utils/logger";
 import { RiskLevel, Frequency, SupportedDCAChains } from "../../../core/types";
 import { z } from "zod";
+import { User } from "../../../models/User";
+import { PluginFactory } from "../../../core/strategies/s-dca/chains/factory";
 
 export const createPlanSchema = z.object({
     body: z.object({
@@ -34,6 +36,20 @@ export const getUserTotalInvestmentSchema = z.object({
 });
 
 export const stopAllPlansSchema = z.object({
+    params: z.object({
+        userId: z.string().min(1, "User ID is required"),
+    }),
+});
+
+export const withdrawTokensSchema = z.object({
+    body: z.object({
+        userId: z.string().min(1, "User ID is required"),
+        amount: z.number().positive("Amount must be positive"),
+        chain: z.nativeEnum(SupportedDCAChains),
+    }),
+});
+
+export const getUserCurrentPositionsSchema = z.object({
     params: z.object({
         userId: z.string().min(1, "User ID is required"),
     }),
@@ -91,7 +107,11 @@ export const stopPlan = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Plan not found" });
         }
 
-        res.json(plan);
+        res.json({
+            success: true,
+            message: "Plan stopped and tokens withdrawn successfully",
+            plan
+        });
     } catch (error) {
         if (error instanceof Error) {
             logger.error("Failed to stop DCA plan:", error);
@@ -146,5 +166,55 @@ export const stopAllUserPlans = async (req: Request, res: Response) => {
             return res.status(400).json({ error: error.message });
         }
         res.status(500).json({ error: "Failed to stop all user plans" });
+    }
+};
+
+export const withdrawTokens = async (req: Request, res: Response) => {
+    try {
+        const { body } = withdrawTokensSchema.parse(req);
+        const { userId, amount, chain } = body;
+
+        // Get user to verify ownership
+        const user = await User.findOne({ userId });
+        if (!user) {
+            logger.warn(`User not found for ID: ${userId}`);
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Get the appropriate plugin for the chain
+        const plugin = PluginFactory.getPlugin(chain);
+
+        // Execute the withdrawal
+        const txHash = await plugin.withdrawTokens(amount, user.address);
+
+        logger.info(`Successfully withdrew ${amount} tokens for user ${userId} on chain ${chain}, txHash: ${txHash}`);
+
+        res.json({
+            success: true,
+            txHash,
+            message: "Withdrawal initiated successfully"
+        });
+    } catch (error) {
+        if (error instanceof Error) {
+            logger.error("Failed to withdraw tokens:", error);
+            return res.status(400).json({ error: error.message });
+        }
+        res.status(500).json({ error: "Failed to withdraw tokens" });
+    }
+};
+
+export const getUserCurrentPositions = async (req: Request, res: Response) => {
+    try {
+        const { params } = getUserCurrentPositionsSchema.parse(req);
+        const { userId } = params;
+
+        const positions = await dcaService.getUserCurrentPositions(userId);
+        res.json(positions);
+    } catch (error) {
+        if (error instanceof Error) {
+            logger.error("Failed to get current positions:", error);
+            return res.status(400).json({ error: error.message });
+        }
+        res.status(500).json({ error: "Failed to get current positions" });
     }
 };

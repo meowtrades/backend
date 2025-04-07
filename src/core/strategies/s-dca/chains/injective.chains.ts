@@ -8,6 +8,7 @@ import {
     PrivateKey,
     ChainGrpcBankApi,
     TxRestApi,
+    ChainGrpcExchangeApi,
 } from "@injectivelabs/sdk-ts";
 import { BigNumberInBase } from "@injectivelabs/utils";
 import { DEFAULT_BLOCK_TIMEOUT_HEIGHT } from "@injectivelabs/utils";
@@ -17,6 +18,7 @@ import dotenv from 'dotenv';
 import { DCAPlugin } from "../../../types";
 import { logger } from '../../../../utils/logger';
 import { INJECTIVE_CONSTANTS } from '../../../../constants';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -42,10 +44,9 @@ export class InjectivePlugin implements DCAPlugin {
         this.INJ_DENOM = INJECTIVE_CONSTANTS.INJ_DENOM;
     }
 
-    async sendTransaction(
+    async sendSwapTransaction(
         amount: number,
-        fromAddress: string,
-        userWalletAddress: string
+        fromAddress: string
     ): Promise<string> {
         try {
             // Using private key from environment variables
@@ -59,7 +60,6 @@ export class InjectivePlugin implements DCAPlugin {
             const walletAddress = privateKey.toBech32();
             
             logger.info(`Using wallet address: ${walletAddress}`);
-            logger.info(`Sending swapped tokens to: ${userWalletAddress}`);
             logger.info(`Swap amount: ${amount} USDT`);
 
             // For this implementation, we'll swap USDT to INJ
@@ -135,101 +135,100 @@ export class InjectivePlugin implements DCAPlugin {
             
             if (txResponse.txHash) {
                 logger.info(`Swap transaction successful: ${txResponse.txHash}`);
-                
-                // After swap is complete, send INJ to desired address if different from wallet
-                if (userWalletAddress !== walletAddress) {
-                    logger.info(`Transferring swapped tokens to ${userWalletAddress}`);
-                    
-                    // Wait a bit for the swap transaction to be processed
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-                    
-                    // Get the current INJ balance to determine how much to send
-                    const injBalance = await this.getNativeBalance(walletAddress);
-                    
-                    // Keep some INJ for gas fees (0.01 INJ)
-                    const amountToSend = Math.max(0, injBalance - 0.01);
-                    
-                    if (amountToSend <= 0) {
-                        logger.warn(`Not enough INJ balance to transfer after swap`);
-                        return txResponse.txHash;
-                    }
-                    
-                    logger.info(`Sending ${amountToSend} INJ to ${userWalletAddress}`);
-                    
-                    // Convert to base units (INJ has 18 decimals)
-                    const sendAmountInBaseUnits = new BigNumberInBase(amountToSend)
-                        .times(new BigNumberInBase(10).pow(18))
-                        .toFixed(0);
-                    
-                    // STEP 1: Get updated account details for the transfer transaction
-                    const updatedAccountDetails = await chainRestAuthApi.fetchAccount(walletAddress);
-                    const updatedBaseAccount = BaseAccount.fromRestApi(updatedAccountDetails);
-                    
-                    // STEP 2: Get updated block details
-                    const updatedLatestBlock = await chainRestTendermintApi.fetchLatestBlock();
-                    const updatedLatestHeight = updatedLatestBlock.header.height;
-                    const updatedTimeoutHeight = new BigNumberInBase(updatedLatestHeight).plus(DEFAULT_BLOCK_TIMEOUT_HEIGHT);
-                    
-                    // STEP 3: Create the transfer message using the structure from the first file
-                    const amountInToken = {
-                        amount: sendAmountInBaseUnits,
-                        denom: this.INJ_DENOM,
-                    };
-                    
-                    const sendMsg = MsgSend.fromJSON({
-                        amount: amountInToken,
-                        srcInjectiveAddress: walletAddress,
-                        dstInjectiveAddress: userWalletAddress,
-                    });
-                    
-                    // STEP 4: Prepare the transfer transaction
-                    const transferFee = {
-                        amount: [
-                            {
-                                denom: 'inj',
-                                amount: '2000000000000000', // 0.002 INJ
-                            },
-                        ],
-                        gas: '150000', // 150,000 gas units
-                    };
-                    
-                    const transferTx = createTransaction({
-                        pubKey: privateKey.toPublicKey().toBase64(),
-                        chainId: this.chainId,
-                        fee: transferFee,
-                        message: sendMsg,
-                        sequence: updatedBaseAccount.sequence,
-                        timeoutHeight: updatedTimeoutHeight.toNumber(),
-                        accountNumber: updatedBaseAccount.accountNumber,
-                    });
-                    
-                    // STEP 5: Sign the transfer transaction
-                    const transferBytesToSign = transferTx.signBytes 
-                        ? transferTx.signBytes 
-                        : Buffer.from(transferTx.signDoc.bodyBytes);
-                        
-                    const transferSignature = await privateKey.sign(Buffer.from(transferBytesToSign));
-                    transferTx.txRaw.signatures = [Buffer.from(transferSignature)];
-                    
-                    // STEP 6: Broadcast the transfer transaction using TxRestApi
-                    const transferResponse = await txClient.broadcast(transferTx.txRaw);
-                    
-                    if (transferResponse.txHash) {
-                        logger.info(`Transfer transaction successful: ${transferResponse.txHash}`);
-                        return transferResponse.txHash;
-                    } else {
-                        logger.error(`Transfer response missing txHash: ${JSON.stringify(transferResponse)}`);
-                        return txResponse.txHash; // Return the swap tx hash if transfer fails
-                    }
-                }
-                
                 return txResponse.txHash;
             } else {
                 throw new Error(`Broadcast response missing txHash: ${JSON.stringify(txResponse)}`);
             }
         } catch (error) {
-            logger.error(`Failed to execute transaction: ${error}`);
-            throw new Error(`Failed to execute transaction: ${error}`);
+            logger.error(`Failed to execute swap transaction: ${error}`);
+            throw new Error(`Failed to execute swap transaction: ${error}`);
+        }
+    }
+
+    async withdrawTokens(amount: number, toAddress: string): Promise<string> {
+        try {
+            // Using private key from environment variables
+            const privateKeyHex = process.env.PRIVATE_KEY_INJECTIVE;
+            if (!privateKeyHex) {
+                throw new Error("Private key not found in environment variables (PRIVATE_KEY_INJECTIVE)");
+            }
+
+            // Create private key from hex string
+            const privateKey = PrivateKey.fromHex(privateKeyHex);
+            const walletAddress = privateKey.toBech32();
+            
+            logger.info(`Withdrawing ${amount} INJ from ${walletAddress} to ${toAddress}`);
+
+            // Convert to base units (INJ has 18 decimals)
+            const amountInBaseUnits = new BigNumberInBase(amount)
+                .times(new BigNumberInBase(10).pow(18))
+                .toFixed(0);
+
+            // Get account details
+            const chainRestAuthApi = new ChainRestAuthApi(this.restEndpoint);
+            const accountDetailsResponse = await chainRestAuthApi.fetchAccount(walletAddress);
+            const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse);
+
+            // Get block details
+            const chainRestTendermintApi = new ChainRestTendermintApi(this.restEndpoint);
+            const latestBlock = await chainRestTendermintApi.fetchLatestBlock();
+            const latestHeight = latestBlock.header.height;
+            const timeoutHeight = new BigNumberInBase(latestHeight).plus(DEFAULT_BLOCK_TIMEOUT_HEIGHT);
+
+            // Create the transfer message
+            const amountInToken = {
+                amount: amountInBaseUnits,
+                denom: this.INJ_DENOM,
+            };
+            
+            const sendMsg = MsgSend.fromJSON({
+                amount: amountInToken,
+                srcInjectiveAddress: walletAddress,
+                dstInjectiveAddress: toAddress,
+            });
+
+            // Prepare the transfer transaction
+            const transferFee = {
+                amount: [
+                    {
+                        denom: 'inj',
+                        amount: '2000000000000000', // 0.002 INJ
+                    },
+                ],
+                gas: '150000', // 150,000 gas units
+            };
+            
+            const transferTx = createTransaction({
+                pubKey: privateKey.toPublicKey().toBase64(),
+                chainId: this.chainId,
+                fee: transferFee,
+                message: sendMsg,
+                sequence: baseAccount.sequence,
+                timeoutHeight: timeoutHeight.toNumber(),
+                accountNumber: baseAccount.accountNumber,
+            });
+            
+            // Sign the transfer transaction
+            const transferBytesToSign = transferTx.signBytes 
+                ? transferTx.signBytes 
+                : Buffer.from(transferTx.signDoc.bodyBytes);
+                
+            const transferSignature = await privateKey.sign(Buffer.from(transferBytesToSign));
+            transferTx.txRaw.signatures = [Buffer.from(transferSignature)];
+            
+            // Broadcast the transfer transaction
+            const txClient = new TxRestApi(this.restEndpoint);
+            const transferResponse = await txClient.broadcast(transferTx.txRaw);
+            
+            if (transferResponse.txHash) {
+                logger.info(`Withdrawal transaction successful: ${transferResponse.txHash}`);
+                return transferResponse.txHash;
+            } else {
+                throw new Error(`Withdrawal response missing txHash: ${JSON.stringify(transferResponse)}`);
+            }
+        } catch (error) {
+            logger.error(`Failed to withdraw tokens: ${error}`);
+            throw new Error(`Failed to withdraw tokens: ${error}`);
         }
     }
 
@@ -275,6 +274,24 @@ export class InjectivePlugin implements DCAPlugin {
         } catch (error) {
             // If no balance found or error occurs, return 0
             logger.error(`Failed to get INJ balance: ${error}`);
+            return 0;
+        }
+    }
+
+    async getNativeTokenValueInUSDT(amount: number): Promise<number> {
+        try {
+            // Get current INJ price from CoinGecko
+            const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+                params: {
+                    ids: 'injective-protocol',
+                    vs_currencies: 'usd'
+                }
+            });
+            
+            const currentPrice = response.data['injective-protocol'].usd;
+            return amount * currentPrice;
+        } catch (error) {
+            logger.error(`Failed to get INJ value in USDT: ${error}`);
             return 0;
         }
     }

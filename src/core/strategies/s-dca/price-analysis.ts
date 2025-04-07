@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import { logger } from '../../../utils/logger';
 import { RiskLevel } from '../../../core/types';
+import { CHAIN_TO_TOKEN_ID } from '../../../constants';
 
 dotenv.config();
 
@@ -24,13 +25,6 @@ export interface AnalysisResult {
   priceFactor: number;
   isPriceGoingUp: boolean;
 }
-
-// Add chain to token ID mapping
-const CHAIN_TO_TOKEN_ID: Record<string, string> = {
-  'injective': 'injective-protocol',
-  'aptos': 'aptos',
-  'sonic': 'sonic-svm'
-};
 
 async function fetchHistoricalPrices(tokenId: string, days: number = 30): Promise<PriceData[]> {
   try {

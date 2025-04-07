@@ -20,3 +20,9 @@ export const SONIC_CONSTANTS = {
     SONIC_MINT: '8GgYcsRw6WCtAXvcuvLmeHH3jA6WAMrecXQu3UcMRTQ6',
     RPC_ENDPOINT: 'https://api.testnet.sonic.game'
 };
+
+export const CHAIN_TO_TOKEN_ID: Record<string, string> = {
+    'injective': 'injective-protocol',
+    'aptos': 'aptos',
+    'sonic': 'sonic-svm'
+};

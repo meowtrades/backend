@@ -14,6 +14,7 @@ import dotenv from 'dotenv';
 import { logger } from '../../../../utils/logger';
 import bs58 from 'bs58';
 import { SONIC_CONSTANTS } from '../../../../constants';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -27,12 +28,7 @@ export class SonicPlugin implements DCAPlugin {
         logger.info('Initialized Sonic.game plugin with testnet connection');
     }
 
-    async sendTransaction(
-        amount: number,
-        fromAddress: string,
-        userWalletAddress: string,
-        options: { slippageTolerance?: number } = {}
-    ): Promise<string> {
+    async sendSwapTransaction(amount: number, fromAddress: string): Promise<string> {
         try {
             if (!process.env.PRIVATE_KEY_SONIC) {
                 throw new Error("Private key not found in environment variables (PRIVATE_KEY_SONIC)");
@@ -97,6 +93,69 @@ export class SonicPlugin implements DCAPlugin {
         }
     }
 
+    async withdrawTokens(amount: number, toAddress: string): Promise<string> {
+        try {
+            if (!process.env.PRIVATE_KEY_SONIC) {
+                throw new Error("Private key not found in environment variables (PRIVATE_KEY_SONIC)");
+            }
+
+            // Parse private key and create wallet
+            const privateKeyBytes = bs58.decode(process.env.PRIVATE_KEY_SONIC);
+            const wallet = Keypair.fromSecretKey(privateKeyBytes);
+            
+            // Get token accounts
+            const tokenMint = new PublicKey(SONIC_CONSTANTS.SONIC_MINT);
+            const recipientPublicKey = new PublicKey(toAddress);
+            
+            // Get or create token accounts
+            const sourceTokenAccount = await getOrCreateAssociatedTokenAccount(
+                this.connection, wallet, tokenMint, wallet.publicKey
+            );
+            const recipientTokenAccount = await getOrCreateAssociatedTokenAccount(
+                this.connection, wallet, tokenMint, recipientPublicKey
+            );
+            
+            // Convert amount to proper format (SONIC has 9 decimals)
+            const amountInBaseUnits = Math.floor(amount * 1000000000);
+            
+            // Create transfer instruction
+            const transferInstruction = new TransactionInstruction({
+                keys: [
+                    { pubkey: sourceTokenAccount.address, isSigner: false, isWritable: true },
+                    { pubkey: recipientTokenAccount.address, isSigner: false, isWritable: true },
+                    { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+                ],
+                programId: TOKEN_PROGRAM_ID,
+                data: Buffer.from([
+                    3, // Transfer instruction
+                    ...new Uint8Array(8).fill(0), // Amount (will be set below)
+                ])
+            });
+            
+            // Set the amount in the instruction data
+            const amountBuffer = Buffer.alloc(8);
+            amountBuffer.writeBigUInt64LE(BigInt(amountInBaseUnits));
+            transferInstruction.data.set(amountBuffer, 1);
+            
+            // Create and send transaction
+            const transaction = new Transaction().add(transferInstruction);
+            const { blockhash } = await this.connection.getLatestBlockhash();
+            transaction.recentBlockhash = blockhash;
+            transaction.feePayer = wallet.publicKey;
+            
+            // Sign and send transaction
+            transaction.sign(wallet);
+            const signature = await this.connection.sendTransaction(transaction, [wallet]);
+            
+            logger.info(`Withdrawal transaction sent: ${signature}`);
+            return signature;
+
+        } catch (error) {
+            logger.error(`Withdrawal failed: ${error}`);
+            throw error;
+        }
+    }
+
     // Simple balance check methods
     async getUSDTBalance(address: string): Promise<number> {
         try {
@@ -120,6 +179,24 @@ export class SonicPlugin implements DCAPlugin {
             return tokenAccounts.value[0]?.account.data.parsed.info.tokenAmount.uiAmount || 0;
         } catch (error) {
             logger.error(`Failed to get SONIC balance: ${error}`);
+            return 0;
+        }
+    }
+
+    async getNativeTokenValueInUSDT(amount: number): Promise<number> {
+        try {
+            // Get current SOL price from CoinGecko
+            const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+                params: {
+                    ids: 'solana',
+                    vs_currencies: 'usd'
+                }
+            });
+            
+            const currentPrice = response.data.solana.usd;
+            return amount * currentPrice;
+        } catch (error) {
+            logger.error(`Failed to get SOL value in USDT: ${error}`);
             return 0;
         }
     }

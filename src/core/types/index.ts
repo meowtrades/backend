@@ -1,8 +1,10 @@
 export interface DCAPlugin {
   name: string;
-  sendTransaction(amount: number, fromAddress: string, toAddress: string): Promise<string>;
+  sendSwapTransaction(amount: number, fromAddress: string): Promise<string>;
+  withdrawTokens(amount: number, toAddress: string): Promise<string>;
   getUSDTBalance(address: string): Promise<number>;
   getNativeBalance(address: string): Promise<number>;
+  getNativeTokenValueInUSDT(amount: number): Promise<number>;
 }
 
 export enum SupportedDCAChains {

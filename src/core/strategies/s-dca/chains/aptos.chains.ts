@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { logger } from '../../../../utils/logger';
 import { DCAPlugin } from "../../../types";
 import { APTOS_CONSTANTS } from '../../../../constants';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -41,19 +42,15 @@ export class AptosPlugin implements DCAPlugin {
     return new AptosAccount(privateKeyBytes);
   }
 
-  async sendTransaction(
+  async sendSwapTransaction(
     amount: number,
-    fromAddress: string,
-    userWalletAddress: string
+    fromAddress: string
   ): Promise<string> {
     try {
       // For Aptos, we'll use our configured account for transactions
       const account = this.getAccount();
-      const recipientAddress = userWalletAddress.startsWith("0x")
-        ? userWalletAddress
-        : `0x${userWalletAddress}`;
 
-      logger.info(`Aptos Plugin: Swapping ${amount} USDC to APT for recipient: ${recipientAddress}`);
+      logger.info(`Aptos Plugin: Swapping ${amount} USDC to APT`);
 
       // Create swap transaction payload
       const payload = {
@@ -74,43 +71,10 @@ export class AptosPlugin implements DCAPlugin {
       logger.info(`Swap transaction submitted: ${swapResult.hash}`);
       await this.client.waitForTransaction(swapResult.hash);
       
-      // If recipient is different from sender, transfer the APT
-      if (recipientAddress.toLowerCase() !== account.address().hex().toLowerCase()) {
-        // Get the APT balance after swap
-        const aptBalance = await this.getNativeBalance(account.address().hex());
-        const amountToTransfer = Math.max(0, aptBalance - 0.1); // Keep 0.1 APT for gas fees
-        
-        if (amountToTransfer <= 0) {
-          logger.warn("Not enough APT balance to transfer after swap");
-          return swapResult.hash;
-        }
-        
-        logger.info(`Transferring ${amountToTransfer} APT to ${recipientAddress}`);
-        
-        // Convert to smallest units (8 decimals for APT)
-        const transferAmount = BigInt(Math.floor(amountToTransfer * 100000000)).toString();
-        
-        // Create transfer transaction
-        const transferPayload = {
-          function: "0x1::aptos_account::transfer",
-          type_arguments: [],
-          arguments: [recipientAddress, transferAmount]
-        };
-        
-        const transferTxn = await this.client.generateTransaction(account.address(), transferPayload);
-        const signedTransferTxn = await this.client.signTransaction(account, transferTxn);
-        const transferResult = await this.client.submitTransaction(signedTransferTxn);
-        
-        logger.info(`Transfer transaction submitted: ${transferResult.hash}`);
-        await this.client.waitForTransaction(transferResult.hash);
-        
-        return transferResult.hash;
-      }
-      
       return swapResult.hash;
     } catch (error) {
-      logger.error(`Aptos Plugin: Failed to execute transaction: ${error}`);
-      throw new Error(`Failed to execute transaction: ${error}`);
+      logger.error(`Aptos Plugin: Failed to execute swap transaction: ${error}`);
+      throw new Error(`Failed to execute swap transaction: ${error}`);
     }
   }
 
@@ -150,6 +114,55 @@ export class AptosPlugin implements DCAPlugin {
     } catch (error) {
       // If no balance found or error occurs, return 0
       logger.error(`Aptos Plugin: Failed to get APT balance: ${error}`);
+      return 0;
+    }
+  }
+
+  async withdrawTokens(amount: number, toAddress: string): Promise<string> {
+    try {
+      const account = this.getAccount();
+      const recipientAddress = toAddress.startsWith("0x") ? toAddress : `0x${toAddress}`;
+
+      logger.info(`Aptos Plugin: Withdrawing ${amount} APT to ${recipientAddress}`);
+
+      // Convert to smallest units (8 decimals for APT)
+      const transferAmount = BigInt(Math.floor(amount * 100000000)).toString();
+      
+      // Create transfer transaction
+      const transferPayload = {
+        function: "0x1::aptos_account::transfer",
+        type_arguments: [],
+        arguments: [recipientAddress, transferAmount]
+      };
+      
+      const transferTxn = await this.client.generateTransaction(account.address(), transferPayload);
+      const signedTransferTxn = await this.client.signTransaction(account, transferTxn);
+      const transferResult = await this.client.submitTransaction(signedTransferTxn);
+      
+      logger.info(`Withdrawal transaction submitted: ${transferResult.hash}`);
+      await this.client.waitForTransaction(transferResult.hash);
+      
+      return transferResult.hash;
+    } catch (error) {
+      logger.error(`Aptos Plugin: Failed to withdraw tokens: ${error}`);
+      throw new Error(`Failed to withdraw tokens: ${error}`);
+    }
+  }
+
+  async getNativeTokenValueInUSDT(amount: number): Promise<number> {
+    try {
+      // Get current APT price from CoinGecko
+      const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+        params: {
+          ids: 'aptos',
+          vs_currencies: 'usd'
+        }
+      });
+      
+      const currentPrice = response.data.aptos.usd;
+      return amount * currentPrice;
+    } catch (error) {
+      logger.error(`Failed to get APT value in USDT: ${error}`);
       return 0;
     }
   }
