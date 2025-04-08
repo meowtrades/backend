@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import routes from './routes/index.routes';
 import { logger } from './utils/logger';
 import { PluginFactory } from './core/strategies/s-dca/chains/factory';
+import { TransactionRecoveryService } from './core/services/TransactionRecoveryService';
 
 dotenv.config();
 
@@ -23,6 +24,10 @@ app.use('/api', routes);
 // Initialize plugins
 PluginFactory.initializePlugins();
 logger.info('Plugins initialized successfully');
+
+// Initialize transaction recovery service
+TransactionRecoveryService.getInstance();
+logger.info('Transaction recovery service initialized');
 
 mongoose.connect(MONGODB_URI)
   .then(() => {

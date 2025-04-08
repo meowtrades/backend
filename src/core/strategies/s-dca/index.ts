@@ -6,14 +6,17 @@ import { logger } from '../../../utils/logger';
 import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
 import { PluginFactory } from "./chains/factory";
 import { RiskLevel } from '../../types';
+import { TransactionRecoveryService } from '../../services/TransactionRecoveryService';
 
 export class DCAService {
   private plugins: Map<string, DCAPlugin>;
   private cronJobs: Map<string, cron.ScheduledTask>;
+  private recoveryService: TransactionRecoveryService;
 
   constructor() {
     this.plugins = new Map();
     this.cronJobs = new Map();
+    this.recoveryService = TransactionRecoveryService.getInstance();
     logger.info('DCAService initialized, starting to initialize existing plans');
     this.initializeExistingPlans();
   }
@@ -119,34 +122,60 @@ export class DCAService {
           Random Component: ${randomNumber}, Final Amount: ${executionAmount}`);
       }
 
-      // Get the appropriate plugin for this chain
-      logger.info(`Getting plugin for chain ${plan.chain}`);
-      const plugin = this.getPlugin(plan.chain);
-
-      // Execute the transaction with the calculated amount
-      logger.info(`Sending swap transaction for plan ${plan._id}:
-        Amount: ${executionAmount}
-        From: ${user.address}`);
-      const txHash = await plugin.sendSwapTransaction(
-        executionAmount,
-        user.address
+      // Create a transaction record for tracking and recovery
+      const transaction = await this.recoveryService.createTransactionAttempt(
+        plan._id.toString(),
+        plan.userId,
+        plan.chain,
+        executionAmount
       );
 
-      // Update plan data
-      plan.lastExecutionTime = new Date();
-      plan.totalInvested += executionAmount;
-      plan.executionCount += 1;
-      
-      // After first execution, save the initial amount for future calculations
-      if (plan.executionCount === 1) {
-        plan.initialAmount = plan.amount;
-      }
-      
-      await plan.save();
+      try {
+        // Get the appropriate plugin for this chain
+        logger.info(`Getting plugin for chain ${plan.chain}`);
+        const plugin = this.getPlugin(plan.chain);
 
-      logger.info(`Successfully executed DCA plan: ${plan._id}, txHash: ${txHash}, amount: ${executionAmount}`);
+        // Execute the transaction with the calculated amount
+        logger.info(`Sending swap transaction for plan ${plan._id}:
+          Amount: ${executionAmount}
+          From: ${user.address}`);
+        const txHash = await plugin.sendSwapTransaction(
+          executionAmount,
+          user.address
+        );
+
+        // Mark transaction as completed
+        await this.recoveryService.markTransactionComplete(
+          transaction._id.toString(),
+          txHash
+        );
+
+        // Update plan data
+        plan.lastExecutionTime = new Date();
+        plan.totalInvested += executionAmount;
+        plan.executionCount += 1;
+        
+        // After first execution, save the initial amount for future calculations
+        if (plan.executionCount === 1) {
+          plan.initialAmount = plan.amount;
+        }
+        
+        await plan.save();
+
+        logger.info(`Successfully executed DCA plan: ${plan._id}, txHash: ${txHash}, amount: ${executionAmount}`);
+      } catch (error) {
+        // Mark transaction as failed for later recovery
+        logger.error(`Failed to execute transaction for plan ${plan._id}:`, error);
+        await this.recoveryService.markTransactionFailed(
+          transaction._id.toString(),
+          error instanceof Error ? error.message : String(error)
+        );
+        
+        // Don't throw here, as we've recorded the failure for recovery
+      }
     } catch (error) {
-      logger.error(`Failed to execute plan ${plan._id}:`, error);
+      logger.error(`Failed to prepare execution for plan ${plan._id}:`, error);
+      // Plan preparation errors are not recoverable automatically
     }
   }
 

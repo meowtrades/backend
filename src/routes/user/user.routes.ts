@@ -1,6 +1,8 @@
 // src/routes/user.ts
 import express from 'express';
 import { createOrUpdateUser, getUserByAddress, getUserById } from './user.controller';
+import analytics from './analytics/analytics.routes';
+import balance from './balance/balance.routes';
 
 const router = express.Router();
 
@@ -12,5 +14,11 @@ router.get('/address/:address', getUserByAddress);
 
 // Get user by ID
 router.get('/:userId', getUserById);
+
+// Analytics routes
+router.use('/analytics', analytics);
+
+// Balance routes
+router.use('/balance', balance);
 
 export default router;

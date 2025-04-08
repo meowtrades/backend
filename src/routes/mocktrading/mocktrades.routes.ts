@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as mockTradeController from './mocktrades.controller';
+import * as mockTradeController from '../../../controllers/mockTrade.controller';
 
 const router = Router();
 
