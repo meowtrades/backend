@@ -6,6 +6,11 @@ import { logger } from './utils/logger';
 import { PluginFactory } from './core/strategies/s-dca/chains/factory';
 import { TransactionRecoveryService } from './core/services/TransactionRecoveryService';
 
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './lib/auth';
+import cors from 'cors'; // Import the CORS middleware
+import { FRONTEND_URLS } from './constants/configs';
+
 dotenv.config();
 
 const app = express();
@@ -16,6 +21,16 @@ if (!PORT || !MONGODB_URI) {
   logger.error('PORT or MONGODB_URI is not defined');
   process.exit(1);
 }
+
+app.use(
+  cors({
+    origin: FRONTEND_URLS, // Replace with your frontend's origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed HTTP methods
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  })
+);
+
+app.all('/api/auth/*', toNodeHandler(auth));
 
 app.use(express.json());
 
@@ -29,15 +44,16 @@ logger.info('Plugins initialized successfully');
 TransactionRecoveryService.getInstance();
 logger.info('Transaction recovery service initialized');
 
-mongoose.connect(MONGODB_URI)
+mongoose
+  .connect(MONGODB_URI)
   .then(() => {
     logger.info('Connected to MongoDB');
-    
+
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
     });
   })
-  .catch((error) => {
+  .catch(error => {
     logger.error('Failed to connect to MongoDB:', error);
     process.exit(1);
-  }); 
+  });

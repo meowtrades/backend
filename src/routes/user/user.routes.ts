@@ -4,6 +4,9 @@ import { createOrUpdateUser, getUserByAddress, getUserById } from './user.contro
 import analytics from './analytics/analytics.routes';
 import balance from './balance/balance.routes';
 
+import { fromNodeHeaders } from 'better-auth/node';
+import { auth } from '../../lib/auth'; //your better auth instance
+
 const router = express.Router();
 
 // Create or update user
@@ -20,5 +23,12 @@ router.use('/analytics', analytics);
 
 // Balance routes
 router.use('/balance', balance);
+
+router.get('/me', async (req, res) => {
+  const session = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  });
+  return res.json(session);
+});
 
 export default router;

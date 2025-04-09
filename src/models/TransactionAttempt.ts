@@ -4,7 +4,7 @@ export enum TransactionStatus {
   PENDING = 'pending',
   COMPLETED = 'completed',
   FAILED = 'failed',
-  RETRYING = 'retrying'
+  RETRYING = 'retrying',
 }
 
 export interface ITransactionAttempt extends Document {
@@ -23,25 +23,28 @@ export interface ITransactionAttempt extends Document {
   updatedAt: Date;
 }
 
-const TransactionAttemptSchema: Schema = new Schema({
-  planId: { type: Schema.Types.ObjectId, ref: 'InvestmentPlan', required: true },
-  userId: { type: String, required: true },
-  chain: { type: String, required: true },
-  amount: { type: Number, required: true },
-  status: { 
-    type: String, 
-    enum: Object.values(TransactionStatus),
-    default: TransactionStatus.PENDING,
-    required: true 
+const TransactionAttemptSchema: Schema = new Schema(
+  {
+    planId: { type: Schema.Types.ObjectId, ref: 'InvestmentPlan', required: true },
+    userId: { type: String, required: true },
+    chain: { type: String, required: true },
+    amount: { type: Number, required: true },
+    status: {
+      type: String,
+      enum: Object.values(TransactionStatus),
+      default: TransactionStatus.PENDING,
+      required: true,
+    },
+    error: { type: String },
+    txHash: { type: String },
+    retryCount: { type: Number, default: 0 },
+    maxRetries: { type: Number, default: 3 },
+    lastAttemptTime: { type: Date, default: Date.now },
   },
-  error: { type: String },
-  txHash: { type: String },
-  retryCount: { type: Number, default: 0 },
-  maxRetries: { type: Number, default: 3 },
-  lastAttemptTime: { type: Date, default: Date.now },
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Index to find pending and retrying transactions
 TransactionAttemptSchema.index({ status: 1, lastAttemptTime: 1 });
@@ -50,4 +53,7 @@ TransactionAttemptSchema.index({ planId: 1 });
 // Index for finding transactions by user
 TransactionAttemptSchema.index({ userId: 1 });
 
-export const TransactionAttempt = mongoose.model<ITransactionAttempt>('TransactionAttempt', TransactionAttemptSchema); 
+export const TransactionAttempt = mongoose.model<ITransactionAttempt>(
+  'TransactionAttempt',
+  TransactionAttemptSchema
+);
