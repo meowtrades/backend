@@ -19,6 +19,7 @@
     "aptos": "^1.21.0",
     "bs58": "^6.0.0",
     "dotenv": "^16.3.1",
+    "ethers": "^5.7.2",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.1.0",

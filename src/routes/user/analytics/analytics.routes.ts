@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as analyticsController from '../../../controllers/analytics.controller';
+import * as analyticsController from './analytics.controller';
 
 const router = Router();
 
@@ -8,9 +8,6 @@ router.get('/performance/history', analyticsController.getUserPerformanceHistory
 
 // Route to get historical performance data for a specific strategy
 router.get('/performance/strategy/:strategyId', analyticsController.getStrategyPerformanceHistory);
-
-// Route to compare performance of multiple strategies
-router.post('/performance/compare', analyticsController.compareStrategiesPerformance);
 
 // Route to get user-specific statistics (aggregated data)
 router.get('/statistics/user', analyticsController.getUserStatistics);
