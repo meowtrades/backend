@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IMockTrade extends Document {
-  userId: mongoose.Types.ObjectId; // Assuming user IDs are MongoDB ObjectIds
+  userId: string; // Assuming user IDs are MongoDB ObjectIds
   strategyId: string; // Identifier for the chosen strategy
   tokenSymbol: string; // e.g., 'BTC', 'ETH'
   initialInvestment: number;
@@ -54,4 +54,4 @@ const mockTradeSchema: Schema<IMockTrade> = new Schema(
   }
 );
 
-export const MockTrade = mongoose.model<IMockTrade>('MockTrade', mockTradeSchema); 
+export const MockTrade = mongoose.model<IMockTrade>('MockTrade', mockTradeSchema);

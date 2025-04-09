@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
-
 // Extend Request type to include user (assuming auth middleware adds it)
-interface AuthenticatedRequest extends Request {
-  user?: { _id: mongoose.Types.ObjectId }; // Adjust based on your actual user object structure
-}
+interface AuthenticatedRequest extends Request {}
 
 export const createMockTrade = async (
   req: AuthenticatedRequest,
@@ -12,7 +9,7 @@ export const createMockTrade = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
@@ -34,7 +31,7 @@ export const getActiveMockTrades = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
@@ -54,16 +51,16 @@ export const getMockTradeDetails = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.id;
     const mockTradeId = req.params.id;
     const granularity = req.query.granularity as string | undefined; // e.g., 'daily', 'hourly'
 
     if (!userId) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
-    if (!mongoose.Types.ObjectId.isValid(mockTradeId)) {
-        return res.status(400).json({ message: 'Invalid mock trade ID' });
-    }
+    // if (!String(mockTradeId).isValid) {
+    //   return res.status(400).json({ message: 'Invalid mock trade ID' });
+    // }
 
     // TODO: Call the service layer to get trade details and performance history
     // const tradeDetails = await mockTradeService.getDetailsById(mockTradeId, userId, granularity);
@@ -81,25 +78,27 @@ export const stopMockTrade = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.id;
     const mockTradeId = req.params.id;
 
     if (!userId) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
-    if (!mongoose.Types.ObjectId.isValid(mockTradeId)) {
-        return res.status(400).json({ message: 'Invalid mock trade ID' });
-    }
+    // if (!String(mockTradeId).isValid) {
+    //   return res.status(400).json({ message: 'Invalid mock trade ID' });
+    // }
 
     // TODO: Call the service layer to stop the trade
     // const updatedTrade = await mockTradeService.stopTrade(mockTradeId, userId);
     // if (!updatedTrade) { return res.status(404).json({ message: 'Mock trade not found or access denied' }); }
 
-    res.status(200).json({ message: 'Mock trade stopped successfully', data: {} /* updatedTrade */ }); // Replace {} with actual data
+    res
+      .status(200)
+      .json({ message: 'Mock trade stopped successfully', data: {} /* updatedTrade */ }); // Replace {} with actual data
   } catch (error) {
     next(error);
   }
 };
 
 // Placeholder for potential future strategy backtest endpoint
-// export const getStrategyBacktest = async (req: Request, res: Response, next: NextFunction) => { ... }; 
+// export const getStrategyBacktest = async (req: Request, res: Response, next: NextFunction) => { ... };

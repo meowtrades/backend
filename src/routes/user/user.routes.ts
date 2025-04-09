@@ -6,8 +6,11 @@ import balance from './balance/balance.routes';
 
 import { fromNodeHeaders } from 'better-auth/node';
 import { auth } from '../../lib/auth'; //your better auth instance
+import { getSession } from '../../middleware/auth';
 
 const router = express.Router();
+
+router.use(getSession);
 
 // Create or update user
 router.post('/', createOrUpdateUser);
@@ -16,7 +19,6 @@ router.post('/', createOrUpdateUser);
 router.get('/address/:address', getUserByAddress);
 
 // Get user by ID
-router.get('/:userId', getUserById);
 
 // Analytics routes
 router.use('/analytics', analytics);
@@ -25,10 +27,9 @@ router.use('/analytics', analytics);
 router.use('/balance', balance);
 
 router.get('/me', async (req, res) => {
-  const session = await auth.api.getSession({
-    headers: fromNodeHeaders(req.headers),
-  });
-  return res.json(session);
+  return res.json(req.user);
 });
+
+// router.get('/:userId', getUserById);
 
 export default router;

@@ -24,9 +24,9 @@ if (!PORT || !MONGODB_URI) {
 
 app.use(
   cors({
-    origin: FRONTEND_URLS, // Replace with your frontend's origin
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed HTTP methods
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+    origin: FRONTEND_URLS,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
   })
 );
 

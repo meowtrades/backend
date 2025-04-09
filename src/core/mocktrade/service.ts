@@ -4,7 +4,7 @@ import { MockTrade, IMockTrade } from '../../models/mockTrade.model';
 // --- Interfaces --- (Define expected inputs/outputs)
 
 interface CreateMockTradeInput {
-  userId: mongoose.Types.ObjectId;
+  userId: string;
   strategyId: string;
   tokenSymbol: string;
   initialInvestment?: number;
@@ -20,9 +20,7 @@ interface MockTradeDetails {
 /**
  * Creates a new mock trade simulation.
  */
-export const create = async (
-  input: CreateMockTradeInput
-): Promise<IMockTrade> => {
+export const create = async (input: CreateMockTradeInput): Promise<IMockTrade> => {
   const { userId, strategyId, tokenSymbol, initialInvestment } = input;
 
   // TODO: Validate strategyId exists
@@ -43,9 +41,7 @@ export const create = async (
 /**
  * Finds all active mock trades for a specific user.
  */
-export const findActiveByUser = async (
-  userId: mongoose.Types.ObjectId
-): Promise<IMockTrade[]> => {
+export const findActiveByUser = async (userId: string): Promise<IMockTrade[]> => {
   return MockTrade.find({ userId, status: 'active' }).sort({ createdAt: -1 });
 };
 
@@ -54,7 +50,7 @@ export const findActiveByUser = async (
  */
 export const getDetailsById = async (
   mockTradeId: string,
-  userId: mongoose.Types.ObjectId, // Ensure user owns the trade
+  userId: string, // Ensure user owns the trade
   granularity?: string // e.g., 'daily', 'hourly'
 ): Promise<MockTradeDetails | null> => {
   const trade = await MockTrade.findOne({ _id: mockTradeId, userId });
@@ -64,7 +60,9 @@ export const getDetailsById = async (
   }
 
   // --- Placeholder for fetching price data and calculating performance ---
-  console.log(`Fetching price data for ${trade.tokenSymbol} from ${trade.startDate} with ${granularity} granularity...`);
+  console.log(
+    `Fetching price data for ${trade.tokenSymbol} from ${trade.startDate} with ${granularity} granularity...`
+  );
   // 1. Determine required time range (trade.startDate to now or trade.endDate)
   // 2. Fetch historical price data from an external API (e.g., CoinGecko, Binance)
   // 3. Apply the logic defined by trade.strategyId to the price data
@@ -84,7 +82,7 @@ export const getDetailsById = async (
  */
 export const stopTrade = async (
   mockTradeId: string,
-  userId: mongoose.Types.ObjectId
+  userId: string
 ): Promise<IMockTrade | null> => {
   const trade = await MockTrade.findOneAndUpdate(
     { _id: mockTradeId, userId, status: 'active' }, // Find active trade owned by user
@@ -102,4 +100,4 @@ export const stopTrade = async (
 // --- Helper/Private functions for fetching data and applying strategies ---
 
 // async function fetchPriceData(tokenSymbol: string, startDate: Date, endDate: Date, granularity: string) { ... }
-// async function applyStrategy(strategyId: string, priceData: any[]) { ... } 
+// async function applyStrategy(strategyId: string, priceData: any[]) { ... }
