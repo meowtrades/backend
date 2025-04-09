@@ -1,5 +1,5 @@
 import express from 'express';
-import { stopAllPlans, getAllActivePlans } from './admin.controller';
+import { stopAllPlans, getAllActivePlans } from './admin.controllers';
 import { authenticateAdmin } from '../../middleware/auth';
 
 const router = express.Router();

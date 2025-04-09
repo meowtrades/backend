@@ -6,7 +6,7 @@ import {
     getUserTotalInvestment,
     stopAllUserPlans,
     getUserCurrentPositions,
-} from "./s-dca.controller";
+} from "./s-dca.controllers";
 
 const router = express.Router();
 

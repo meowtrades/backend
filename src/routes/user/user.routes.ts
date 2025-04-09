@@ -1,6 +1,6 @@
 // src/routes/user.ts
 import express from 'express';
-import { createOrUpdateUser, getUserByAddress, getUserById } from './user.controller';
+import { createOrUpdateUser, getUserByAddress, getUserById } from './user.controllers';
 import analytics from './analytics/analytics.routes';
 import balance from './balance/balance.routes';
 
