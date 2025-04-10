@@ -117,8 +117,45 @@ export const getChainBalance = async (
       return res.status(400).json({ message: `Chain ${chainId} is not supported` });
     }
 
-    // Retrieve balance for specific chain
-    const balance = await balanceService.getChainBalance(userId, chainId);
+    // Retrieve all balances for the specific chain
+    const balances = await balanceService.getChainBalances(userId, chainId);
+
+    res.status(200).json({ data: balances });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get balance for a specific token on a chain
+ */
+export const getTokenBalance = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    const { chainId, tokenSymbol } = req.params;
+
+    // Validate chain ID
+    if (!getSupportedChains().includes(chainId)) {
+      return res.status(400).json({ message: `Chain ${chainId} is not supported` });
+    }
+
+    // If token symbol is provided, validate it
+    if (tokenSymbol && !isTokenSupportedOnChain(chainId, tokenSymbol)) {
+      return res
+        .status(400)
+        .json({ message: `Token ${tokenSymbol} is not supported on chain ${chainId}` });
+    }
+
+    // Retrieve balance for specific token on the chain
+    const balance = await balanceService.getTokenBalance(userId, chainId, tokenSymbol);
 
     res.status(200).json({ data: balance });
   } catch (error) {
@@ -271,6 +308,15 @@ export const allocateFundsToStrategy = async (
         status: 'active',
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllChainTokens = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tokens = await balanceService.getAllChainTokens();
+    res.status(200).json({ data: tokens });
   } catch (error) {
     next(error);
   }

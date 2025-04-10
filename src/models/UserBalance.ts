@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 // Interface for chain-specific balance
 interface IChainBalance {
   chainId: string;
+  tokenSymbol: string;
   balance: string; // Using string for precision with decimal numbers
   lastUpdated: Date;
 }
@@ -15,6 +16,8 @@ interface ITokenAllocation {
   status: 'pending' | 'active' | 'completed' | 'failed';
   startDate: Date;
   endDate?: Date;
+  tokenSymbol: string;
+  tokenAddress?: string;
 }
 
 // Main user balance interface
@@ -30,6 +33,10 @@ export interface IUserBalance extends Document {
 // Schema for chain-specific balance
 const ChainBalanceSchema = new Schema({
   chainId: {
+    type: String,
+    required: true,
+  },
+  tokenSymbol: {
     type: String,
     required: true,
   },
@@ -70,6 +77,13 @@ const TokenAllocationSchema = new Schema({
   endDate: {
     type: Date,
   },
+  tokenSymbol: {
+    type: String,
+    required: true,
+  },
+  tokenAddress: {
+    type: String,
+  },
 });
 
 // Main user balance schema
@@ -104,6 +118,8 @@ const UserBalanceSchema = new Schema(
 // Create indexes for faster queries
 UserBalanceSchema.index({ userId: 1 });
 UserBalanceSchema.index({ 'balances.chainId': 1 });
+UserBalanceSchema.index({ 'balances.tokenSymbol': 1 });
+UserBalanceSchema.index({ 'balances.chainId': 1, 'balances.tokenSymbol': 1 });
 UserBalanceSchema.index({ 'allocations.strategyId': 1 });
 UserBalanceSchema.index({ 'allocations.status': 1 });
 
