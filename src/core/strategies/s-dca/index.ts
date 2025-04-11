@@ -4,7 +4,7 @@ import { User } from '../../../models/User';
 import cron from 'node-cron';
 import { logger } from '../../../utils/logger';
 import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
-import { PluginFactory } from "./chains/factory";
+import { PluginFactory } from './chains/factory';
 import { RiskLevel } from '../../types';
 import { TransactionRecoveryService } from '../../services/TransactionRecoveryService';
 
@@ -40,7 +40,9 @@ export class DCAService {
             // If user doesn't exist, deactivate the plan
             plan.isActive = false;
             await plan.save();
-            logger.warn(`Deactivated plan ${plan._id} because associated user ${plan.userId} not found`);
+            logger.warn(
+              `Deactivated plan ${plan._id} because associated user ${plan.userId} not found`
+            );
             continue;
           }
           this.schedulePlan(plan);
@@ -71,7 +73,7 @@ export class DCAService {
       default:
         // Check if the frequency exists in the enum before throwing an error
         if (Object.values(Frequency).includes(frequency as Frequency)) {
-           throw new Error(`Cron expression not defined for frequency: ${frequency}`);
+          throw new Error(`Cron expression not defined for frequency: ${frequency}`);
         }
         throw new Error(`Invalid frequency: ${frequency}`);
     }
@@ -92,20 +94,22 @@ export class DCAService {
 
       // If this is not the first execution, apply risk-based strategy
       if (plan.executionCount > 0) {
-        logger.info(`Plan ${plan._id} has previous executions (count: ${plan.executionCount}), applying risk strategy`);
+        logger.info(
+          `Plan ${plan._id} has previous executions (count: ${plan.executionCount}), applying risk strategy`
+        );
         // Get price analysis for token based on chain
         const analysis = await analyzeTokenPrice(plan.chain);
         logger.info(`Price analysis for plan ${plan._id}:`, analysis);
-        
+
         // Get risk multiplier based on user's selected risk level
         const riskMultiplier = getRiskMultiplier(plan.riskLevel as RiskLevel);
-        
+
         // Calculate updated amount based on risk level
         const updatedAmount = plan.initialAmount * riskMultiplier;
-        
+
         // Calculate the random number component based on price factor
         const randomNumber = (updatedAmount - plan.initialAmount) * analysis.priceFactor;
-        
+
         // Apply the formula based on price trend
         if (analysis.isPriceGoingUp) {
           // If price going up: FP = UA - RN
@@ -114,10 +118,12 @@ export class DCAService {
           // If price going down: FP = UA + RN
           executionAmount = updatedAmount + randomNumber;
         }
-        
+
         logger.info(`Plan ${plan._id}: Applied risk-based strategy
           Risk Level: ${plan.riskLevel}, Risk Multiplier: ${riskMultiplier}
-          Price Factor: ${analysis.priceFactor}, Price Trend: ${analysis.isPriceGoingUp ? 'Up' : 'Down'}
+          Price Factor: ${analysis.priceFactor}, Price Trend: ${
+          analysis.isPriceGoingUp ? 'Up' : 'Down'
+        }
           Initial Amount: ${plan.initialAmount}, Updated Amount: ${updatedAmount}
           Random Component: ${randomNumber}, Final Amount: ${executionAmount}`);
       }
@@ -139,30 +145,26 @@ export class DCAService {
         logger.info(`Sending swap transaction for plan ${plan._id}:
           Amount: ${executionAmount}
           From: ${user.address}`);
-        const txHash = await plugin.sendSwapTransaction(
-          executionAmount,
-          user.address
-        );
+        const txHash = await plugin.sendSwapTransaction(executionAmount, user.address);
 
         // Mark transaction as completed
-        await this.recoveryService.markTransactionComplete(
-          transaction._id.toString(),
-          txHash
-        );
+        await this.recoveryService.markTransactionComplete(transaction._id.toString(), txHash);
 
         // Update plan data
         plan.lastExecutionTime = new Date();
         plan.totalInvested += executionAmount;
         plan.executionCount += 1;
-        
+
         // After first execution, save the initial amount for future calculations
         if (plan.executionCount === 1) {
           plan.initialAmount = plan.amount;
         }
-        
+
         await plan.save();
 
-        logger.info(`Successfully executed DCA plan: ${plan._id}, txHash: ${txHash}, amount: ${executionAmount}`);
+        logger.info(
+          `Successfully executed DCA plan: ${plan._id}, txHash: ${txHash}, amount: ${executionAmount}`
+        );
       } catch (error) {
         // Mark transaction as failed for later recovery
         logger.error(`Failed to execute transaction for plan ${plan._id}:`, error);
@@ -170,7 +172,7 @@ export class DCAService {
           transaction._id.toString(),
           error instanceof Error ? error.message : String(error)
         );
-        
+
         // Don't throw here, as we've recorded the failure for recovery
       }
     } catch (error) {
@@ -191,13 +193,16 @@ export class DCAService {
     }
   }
 
-  async createPlan(userId: string, planData: {
-    amount: number;
-    frequency: string;
-    userWalletAddress: string;
-    riskLevel: RiskLevel;
-    chain: string;
-  }): Promise<IInvestmentPlan> {
+  async createPlan(
+    userId: string,
+    planData: {
+      amount: number;
+      frequency: string;
+      userWalletAddress: string;
+      riskLevel: RiskLevel;
+      chain: string;
+    }
+  ): Promise<IInvestmentPlan> {
     // Validate that the chain plugin exists
     this.getPlugin(planData.chain);
 
@@ -206,7 +211,7 @@ export class DCAService {
       ...planData,
       initialAmount: planData.amount,
       isActive: true,
-      executionCount: 0
+      executionCount: 0,
     });
 
     this.schedulePlan(plan);
@@ -221,7 +226,7 @@ export class DCAService {
 
     // Get the plugin for the chain
     const plugin = this.getPlugin(plan.chain);
-    
+
     // Get the user to get their wallet address
     const user = await User.findOne({ userId: plan.userId });
     if (!user) {
@@ -253,7 +258,7 @@ export class DCAService {
   async getUserTotalInvestment(userId: string): Promise<number> {
     const result = await InvestmentPlan.aggregate([
       { $match: { userId: userId } },
-      { $group: { _id: null, total: { $sum: '$totalInvested' } } }
+      { $group: { _id: null, total: { $sum: '$totalInvested' } } },
     ]);
     return result.length > 0 ? result[0].total : 0;
   }
@@ -295,12 +300,14 @@ export class DCAService {
     }
   }
 
-  async getUserCurrentPositions(userId: string): Promise<Array<{
-    planId: string;
-    chain: string;
-    nativeTokenAmount: number;
-    usdtValue: number;
-  }>> {
+  async getUserCurrentPositions(userId: string): Promise<
+    Array<{
+      planId: string;
+      chain: string;
+      nativeTokenAmount: number;
+      usdtValue: number;
+    }>
+  > {
     const plans = await InvestmentPlan.find({ userId });
     const positions = [];
 
@@ -308,7 +315,7 @@ export class DCAService {
       try {
         const plugin = this.getPlugin(plan.chain);
         const user = await User.findOne({ userId: plan.userId });
-        
+
         if (!user) {
           logger.warn(`User not found for plan ${plan._id}`);
           continue;
@@ -316,7 +323,7 @@ export class DCAService {
 
         // Get native token balance
         const nativeTokenAmount = await plugin.getNativeBalance(user.address);
-        
+
         // Get current price of native token in USDT
         const usdtValue = await plugin.getNativeTokenValueInUSDT(nativeTokenAmount);
 
@@ -324,7 +331,7 @@ export class DCAService {
           planId: plan._id.toString(),
           chain: plan.chain,
           nativeTokenAmount,
-          usdtValue
+          usdtValue,
         });
       } catch (error) {
         logger.error(`Failed to get position for plan ${plan._id}:`, error);
