@@ -1,0 +1,586 @@
+{
+  "info": {
+    "_postman_id": "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+    "name": "MeowTrades API",
+    "description": "API collection for MeowTrades backend services",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string",
+      "description": "Base URL for local development"
+    },
+    {
+      "key": "productionUrl",
+      "value": "https://api.meowtrades.com/api",
+      "type": "string",
+      "description": "Production API URL"
+    }
+  ],
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Create or Update User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"address\": \"0x1234567890abcdef1234567890abcdef12345678\",\n    \"email\": \"user@example.com\",\n    \"name\": \"Test User\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["user"]
+            },
+            "description": "Create a new user or update an existing one based on wallet address"
+          }
+        },
+        {
+          "name": "Get User by Address",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/address/0x1234567890abcdef1234567890abcdef12345678",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "address", "0x1234567890abcdef1234567890abcdef12345678"]
+            },
+            "description": "Get user details by their wallet address"
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "me"]
+            },
+            "description": "Get the currently authenticated user's details"
+          }
+        }
+      ],
+      "description": "User management endpoints"
+    },
+    {
+      "name": "User Analytics",
+      "item": [
+        {
+          "name": "Get User Performance History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/analytics/performance/history?timeframe=30d&granularity=daily",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "analytics", "performance", "history"],
+              "query": [
+                {
+                  "key": "timeframe",
+                  "value": "30d",
+                  "description": "Time period for data (e.g., 7d, 30d, 90d, 1y)"
+                },
+                {
+                  "key": "granularity",
+                  "value": "daily",
+                  "description": "Data granularity (hourly, daily, weekly, monthly)"
+                }
+              ]
+            },
+            "description": "Get historical performance data for the authenticated user"
+          }
+        },
+        {
+          "name": "Get Strategy Performance History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/analytics/performance/strategy/12345?timeframe=30d&granularity=daily",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "analytics", "performance", "strategy", "12345"],
+              "query": [
+                {
+                  "key": "timeframe",
+                  "value": "30d"
+                },
+                {
+                  "key": "granularity",
+                  "value": "daily"
+                }
+              ]
+            },
+            "description": "Get performance history for a specific strategy"
+          }
+        },
+        {
+          "name": "Get User Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/analytics/statistics/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "analytics", "statistics", "user"]
+            },
+            "description": "Get aggregated statistics for the authenticated user"
+          }
+        },
+        {
+          "name": "Get Platform Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/analytics/statistics/platform",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "analytics", "statistics", "platform"]
+            },
+            "description": "Get platform-wide statistics accessible to all users"
+          }
+        }
+      ],
+      "description": "User analytics and statistics endpoints"
+    },
+    {
+      "name": "User Balance",
+      "item": [
+        {
+          "name": "Get User Balances",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/balance",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "balance"]
+            },
+            "description": "Get all balances across all chains for the authenticated user"
+          }
+        },
+        {
+          "name": "Get Chain Balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/balance/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "balance", "1"]
+            },
+            "description": "Get user balance for a specific chain (Ethereum Mainnet in this example)"
+          }
+        },
+        {
+          "name": "Get Chain Tokens",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/balance/1/tokens",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "balance", "1", "tokens"]
+            },
+            "description": "Get available tokens for a specific chain"
+          }
+        },
+        {
+          "name": "Deposit Funds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"chainId\": 1,\n    \"tokenAddress\": \"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\n    \"amount\": \"100000000\",\n    \"txHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/balance/deposit",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "balance", "deposit"]
+            },
+            "description": "Deposit funds to the user's balance"
+          }
+        },
+        {
+          "name": "Withdraw Funds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"chainId\": 1,\n    \"tokenAddress\": \"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\n    \"amount\": \"50000000\",\n    \"destinationAddress\": \"0x1234567890abcdef1234567890abcdef12345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/balance/withdraw",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "balance", "withdraw"]
+            },
+            "description": "Withdraw funds from the user's balance"
+          }
+        },
+        {
+          "name": "Allocate Funds to Strategy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"strategyId\": \"12345\",\n    \"chainId\": 1,\n    \"tokenAddress\": \"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\n    \"amount\": \"25000000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/balance/allocate",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "balance", "allocate"]
+            },
+            "description": "Allocate funds from user's balance to a strategy"
+          }
+        }
+      ],
+      "description": "User balance management endpoints"
+    },
+    {
+      "name": "Smart DCA",
+      "item": [
+        {
+          "name": "Create Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"60d0fe4f5311236168a109ca\",\n    \"targetToken\": \"0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9\",\n    \"sourceToken\": \"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48\",\n    \"amount\": \"100000000\",\n    \"frequency\": \"daily\",\n    \"duration\": 30,\n    \"chainId\": 1,\n    \"customSettings\": {\n        \"priceThreshold\": \"1800000000000000000\",\n        \"thresholdComparison\": \"lessThan\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/services/s-dca/create-plan",
+              "host": ["{{baseUrl}}"],
+              "path": ["services", "s-dca", "create-plan"]
+            },
+            "description": "Create a new Smart DCA plan"
+          }
+        },
+        {
+          "name": "Stop Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services/s-dca/stop-plan/60d0fe4f5311236168a109cb",
+              "host": ["{{baseUrl}}"],
+              "path": ["services", "s-dca", "stop-plan", "60d0fe4f5311236168a109cb"]
+            },
+            "description": "Stop a DCA plan and withdraw all invested tokens"
+          }
+        },
+        {
+          "name": "Stop All User Plans",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services/s-dca/stop-all-plans/60d0fe4f5311236168a109ca",
+              "host": ["{{baseUrl}}"],
+              "path": ["services", "s-dca", "stop-all-plans", "60d0fe4f5311236168a109ca"]
+            },
+            "description": "Stop all DCA plans for a user"
+          }
+        },
+        {
+          "name": "Get User Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services/s-dca/plans/60d0fe4f5311236168a109ca",
+              "host": ["{{baseUrl}}"],
+              "path": ["services", "s-dca", "plans", "60d0fe4f5311236168a109ca"]
+            },
+            "description": "Get all DCA plans for a user"
+          }
+        },
+        {
+          "name": "Get User Total Investment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services/s-dca/total-investment/60d0fe4f5311236168a109ca",
+              "host": ["{{baseUrl}}"],
+              "path": ["services", "s-dca", "total-investment", "60d0fe4f5311236168a109ca"]
+            },
+            "description": "Get user's total investment across all DCA plans"
+          }
+        },
+        {
+          "name": "Get User Current Positions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services/s-dca/current-positions/60d0fe4f5311236168a109ca",
+              "host": ["{{baseUrl}}"],
+              "path": ["services", "s-dca", "current-positions", "60d0fe4f5311236168a109ca"]
+            },
+            "description": "Get user's current positions in native tokens"
+          }
+        }
+      ],
+      "description": "Smart DCA service endpoints"
+    },
+    {
+      "name": "Mock Trading",
+      "item": [
+        {
+          "name": "Create Mock Trade",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"pair\": \"BTC/USDT\",\n    \"entryPrice\": 50000,\n    \"amount\": 0.5,\n    \"direction\": \"long\",\n    \"leverage\": 10,\n    \"stopLoss\": 48000,\n    \"takeProfit\": 55000,\n    \"tags\": [\"swing\", \"technical\"],\n    \"notes\": \"Strong support at 50K level, expecting a bounce\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mocktrades",
+              "host": ["{{baseUrl}}"],
+              "path": ["mocktrades"]
+            },
+            "description": "Create a new mock trade"
+          }
+        },
+        {
+          "name": "Get Active Mock Trades",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mocktrades",
+              "host": ["{{baseUrl}}"],
+              "path": ["mocktrades"]
+            },
+            "description": "Get all active mock trades for the logged-in user"
+          }
+        },
+        {
+          "name": "Get Mock Trade Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mocktrades/60d0fe4f5311236168a109cc?granularity=hourly",
+              "host": ["{{baseUrl}}"],
+              "path": ["mocktrades", "60d0fe4f5311236168a109cc"],
+              "query": [
+                {
+                  "key": "granularity",
+                  "value": "hourly",
+                  "description": "Data granularity (hourly, daily, etc.)"
+                }
+              ]
+            },
+            "description": "Get details and performance history of a specific mock trade"
+          }
+        },
+        {
+          "name": "Stop Mock Trade",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"exitPrice\": 53500,\n    \"exitReason\": \"Target reached\",\n    \"notes\": \"Market showed strong momentum as expected\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mocktrades/60d0fe4f5311236168a109cc/stop",
+              "host": ["{{baseUrl}}"],
+              "path": ["mocktrades", "60d0fe4f5311236168a109cc", "stop"]
+            },
+            "description": "Stop an active mock trade"
+          }
+        }
+      ],
+      "description": "Mock trading endpoints"
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get All Active Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAuthToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/active-plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "active-plans"]
+            },
+            "description": "Get all active DCA plans across all users (admin only)"
+          }
+        },
+        {
+          "name": "Stop All Plans",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAuthToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/stop-all-plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "stop-all-plans"]
+            },
+            "description": "Stop all DCA plans across all users (admin only)"
+          }
+        }
+      ],
+      "description": "Admin endpoints (restricted access)"
+    }
+  ]
+}

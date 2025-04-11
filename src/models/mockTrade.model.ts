@@ -14,7 +14,7 @@ export interface IMockTrade extends Document {
 const mockTradeSchema: Schema<IMockTrade> = new Schema(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: 'User', // Link to the User model, adjust if your user model name is different
       required: true,
       index: true,

@@ -2,6 +2,7 @@ import { DCAPlugin } from '../../../types';
 import { InjectivePlugin } from './injective.chains';
 import { AptosPlugin } from './aptos.chains';
 import { SonicPlugin } from './sonic.chains';
+import { MockPlugin } from './mock.chains';
 import { logger } from '../../../../utils/logger';
 
 export class PluginFactory {
@@ -28,6 +29,7 @@ export class PluginFactory {
     PluginFactory.registerPlugin('injective', () => new InjectivePlugin());
     PluginFactory.registerPlugin('aptos', () => new AptosPlugin());
     PluginFactory.registerPlugin('sonic', () => new SonicPlugin());
+    PluginFactory.registerPlugin('mock', () => new MockPlugin());
     logger.info('DCA plugins initialized successfully');
   }
 }
