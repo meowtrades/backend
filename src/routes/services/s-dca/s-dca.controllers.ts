@@ -145,7 +145,7 @@ export const withdrawTokens = async (req: Request, res: Response) => {
     const { amount, chain } = body;
 
     // Get user to verify ownership
-    const user = await User.findOne({ userId });
+    const user = await User.findOne({ _id: userId });
     if (!user) {
       logger.warn(`User not found for ID: ${userId}`);
       return res.status(404).json({ error: 'User not found' });

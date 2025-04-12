@@ -35,7 +35,7 @@ export class DCAService {
       const activePlans = await InvestmentPlan.find({ isActive: true });
       for (const plan of activePlans) {
         try {
-          const user = await User.findOne({ userId: plan.userId });
+          const user = await this.getUserById(plan.userId);
           if (!user) {
             // If user doesn't exist, deactivate the plan
             plan.isActive = false;
@@ -79,13 +79,20 @@ export class DCAService {
     }
   }
 
+  private async getUserById(id: string) {
+    const user = await User.findOne({ _id: id });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
   private async executePlan(plan: IInvestmentPlan) {
     try {
       logger.info(`Starting execution for plan ${plan._id}`);
-      const user = await User.findOne({ userId: plan.userId });
-      if (!user) {
-        throw new Error('User not found');
-      }
+
+      const user = await this.getUserById(plan.userId);
+
       logger.info(`Found user ${user._id} for plan ${plan._id}`);
 
       // Get the execution amount
@@ -228,14 +235,15 @@ export class DCAService {
     const plugin = this.getPlugin(plan.chain);
 
     // Get the user to get their wallet address
-    const user = await User.findOne({ userId: plan.userId });
+    const user = await this.getUserById(plan.userId);
+
     if (!user) {
       throw new Error('User not found');
     }
 
     // Withdraw the total invested amount
     if (plan.totalInvested > 0) {
-      await plugin.withdrawTokens(plan.totalInvested, user.address);
+      // await plugin.withdrawTokens(plan.totalInvested, user.address);
     }
 
     // Stop the plan
@@ -314,7 +322,7 @@ export class DCAService {
     for (const plan of plans) {
       try {
         const plugin = this.getPlugin(plan.chain);
-        const user = await User.findOne({ userId: plan.userId });
+        const user = await this.getUserById(plan.userId);
 
         if (!user) {
           logger.warn(`User not found for plan ${plan._id}`);
