@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import * as mockTradeController from './mockTrade.controllers';
+import { getSession } from '../../middleware/auth';
 
 const router = Router();
+
+router.use(getSession);
 
 // Route to create a new mock trade
 router.post('/', mockTradeController.createMockTrade);
@@ -16,4 +19,4 @@ router.get('/:id', mockTradeController.getMockTradeDetails);
 // Route to stop an active mock trade
 router.patch('/:id/stop', mockTradeController.stopMockTrade);
 
-export default router; 
+export default router;
