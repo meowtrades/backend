@@ -1,0 +1,33 @@
+# Node modules and dependencies
+node_modules
+npm-debug.log
+
+# Git
+.git
+.gitignore
+
+# Build files
+dist
+
+# Environment variables
+.env
+.env.*
+
+# Testing
+test
+coverage
+
+# OS files
+.DS_Store
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentation
+README.md
+
+# Other
+.vscode/
+.idea/ 

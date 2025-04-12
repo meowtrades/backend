@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
+import { InvestmentPlan } from '../../../models/InvestmentPlan';
+import { MockTrade } from '../../../models/mockTrade.model';
+import { UserBalance } from '../../../models/UserBalance';
 
 // Extend Request type to include user (assuming auth middleware adds it)
 interface AuthenticatedRequest extends Request {}
@@ -133,23 +136,48 @@ export const getUserStatistics = async (
       return res.status(401).json({ message: 'User not authenticated' });
     }
 
-    // TODO: Implement data retrieval from service layer
-    // const userStats = await analyticsService.getUserStatistics(userId);
+    // Get all investment plans for this user
+    const investmentPlans = await InvestmentPlan.find({ userId });
 
-    // Mock response for now
-    const mockStats = {
-      totalInvestment: 0,
-      totalCurrentValue: 0,
-      totalProfitLoss: 0,
-      profitLossPercentage: 0,
-      bestPerformingStrategy: null,
-      worstPerformingStrategy: null,
-      activeTrades: 0,
-      completedTrades: 0,
+    const mockTrades = investmentPlans.filter(plan => plan.chain === 'mock');
+    const actualTrades = investmentPlans.filter(plan => plan.chain !== 'mock');
+
+    const userBalance = await UserBalance.findOne({ userId });
+
+    const totalInvestment = actualTrades.reduce((sum, plan) => sum + plan.totalInvested, 0);
+    const activePlans = actualTrades.filter(plan => plan.isActive).length;
+
+    // Calculate mock trade statistics
+    const activeMockTrades = mockTrades.filter(plan => plan.isActive).length;
+    const completedMockTrades = mockTrades.filter(plan => !plan.isActive).length;
+    // Calculate total current value (from UserBalance if available)
+    const totalCurrentValue = actualTrades
+      ? actualTrades.reduce((sum, plan) => sum + plan.amount + plan.totalInvested, 0)
+      : totalInvestment; // Fallback to total investment if no balance data
+
+    // Calculate profit/loss
+    const totalProfitLoss = totalCurrentValue - totalInvestment;
+    const profitLossPercentage =
+      totalInvestment > 0 ? (totalProfitLoss / totalInvestment) * 100 : 0;
+
+    // Compile stats
+    const userStats = {
+      totalInvestment,
+      totalCurrentValue,
+      totalProfitLoss,
+      profitLossPercentage,
+      bestPerformingStrategy: null, // Would need historical data to calculate
+      worstPerformingStrategy: null, // Would need historical data to calculate
+      activeTrades: activePlans + activeMockTrades,
+      completedTrades: completedMockTrades,
       mostTradedToken: null,
+      activePlans,
+      activeInvestmentAmount: investmentPlans
+        .filter(plan => plan.isActive)
+        .reduce((sum, plan) => sum + plan.amount, 0),
     };
 
-    res.status(200).json({ data: mockStats });
+    res.status(200).json({ data: userStats });
   } catch (error) {
     next(error);
   }
