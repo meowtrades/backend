@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import * as analyticsController from './analytics.controllers';
+import { getSession } from '../../../middleware/auth';
 
 const router = Router();
+
+router.use(getSession);
 
 // Route to get user's historical performance data across all trades/strategies
 router.get('/performance/history', analyticsController.getUserPerformanceHistory);
@@ -15,4 +18,4 @@ router.get('/statistics/user', analyticsController.getUserStatistics);
 // Route to get platform-wide statistics (available to users)
 router.get('/statistics/platform', analyticsController.getPlatformStatistics);
 
-export default router; 
+export default router;

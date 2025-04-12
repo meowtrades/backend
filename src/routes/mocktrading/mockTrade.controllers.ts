@@ -1,105 +1,114 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
+import { MockTradeService } from '../../core/services/mockTrade.service';
+// Initialize the mock trade service
+const mockTradeService = new MockTradeService();
 
-// Extend Request type to include user (assuming auth middleware adds it)
-interface AuthenticatedRequest extends Request {
-  user?: { _id: mongoose.Types.ObjectId }; // Adjust based on your actual user object structure
-}
-
-export const createMockTrade = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const createMockTrade = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?._id;
-    if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated' });
-    }
+    const userId = req.user.id;
+
     const { strategyId, tokenSymbol, initialInvestment } = req.body;
-    // TODO: Add input validation (e.g., using zod or express-validator)
 
-    // TODO: Call the service layer to create the mock trade
-    // const mockTrade = await mockTradeService.create(...);
+    // Validate required fields
+    if (!strategyId || !tokenSymbol || !initialInvestment) {
+      return res.status(400).json({
+        message:
+          'Missing required fields. strategyId, tokenSymbol, and initialInvestment are required.',
+      });
+    }
 
-    res.status(201).json({ message: 'Mock trade created successfully', data: {} /* mockTrade */ }); // Replace {} with actual data
+    // Validate investment amount
+    if (isNaN(Number(initialInvestment)) || Number(initialInvestment) <= 0) {
+      return res.status(400).json({ message: 'Initial investment must be a positive number' });
+    }
+
+    // Create the mock trade
+    const mockTrade = await mockTradeService.createMockTrade(userId, {
+      strategyId,
+      tokenSymbol,
+      initialInvestment: Number(initialInvestment),
+    });
+
+    res.status(201).json({
+      message: 'Mock trade created successfully',
+      data: mockTrade,
+    });
   } catch (error) {
     next(error); // Pass error to the global error handler
   }
 };
 
-export const getActiveMockTrades = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const getActiveMockTrades = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?._id;
-    if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated' });
-    }
+    const userId = req.user.id;
 
-    // TODO: Call the service layer to get active trades for the user
-    // const activeTrades = await mockTradeService.findActiveByUser(userId);
+    // Get active trades for the user
+    const activeTrades = await mockTradeService.getActiveMockTrades(userId);
 
-    res.status(200).json({ data: [] /* activeTrades */ }); // Replace [] with actual data
+    res.status(200).json({ data: activeTrades });
   } catch (error) {
     next(error);
   }
 };
 
-export const getMockTradeDetails = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const getMockTradeDetails = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user.id;
     const mockTradeId = req.params.id;
-    const granularity = req.query.granularity as string | undefined; // e.g., 'daily', 'hourly'
 
-    if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated' });
-    }
     if (!mongoose.Types.ObjectId.isValid(mockTradeId)) {
-        return res.status(400).json({ message: 'Invalid mock trade ID' });
+      return res.status(400).json({ message: 'Invalid mock trade ID' });
     }
 
-    // TODO: Call the service layer to get trade details and performance history
-    // const tradeDetails = await mockTradeService.getDetailsById(mockTradeId, userId, granularity);
-    // if (!tradeDetails) { return res.status(404).json({ message: 'Mock trade not found or access denied' }); }
+    // Get trade details
+    const tradeDetails = await mockTradeService.getMockTradeDetails(mockTradeId, userId);
 
-    res.status(200).json({ data: {} /* tradeDetails */ }); // Replace {} with actual data
+    if (!tradeDetails) {
+      return res.status(404).json({ message: 'Mock trade not found or access denied' });
+    }
+
+    // If the trade is active, also get current position
+    let position = null;
+    if (tradeDetails.status === 'active') {
+      position = await mockTradeService.getMockTradePosition(mockTradeId, userId);
+    }
+
+    res.status(200).json({
+      data: {
+        trade: tradeDetails,
+        position: position,
+      },
+    });
   } catch (error) {
     next(error);
   }
 };
 
-export const stopMockTrade = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const stopMockTrade = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user.id;
     const mockTradeId = req.params.id;
 
-    if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated' });
-    }
     if (!mongoose.Types.ObjectId.isValid(mockTradeId)) {
-        return res.status(400).json({ message: 'Invalid mock trade ID' });
+      return res.status(400).json({ message: 'Invalid mock trade ID' });
     }
 
-    // TODO: Call the service layer to stop the trade
-    // const updatedTrade = await mockTradeService.stopTrade(mockTradeId, userId);
-    // if (!updatedTrade) { return res.status(404).json({ message: 'Mock trade not found or access denied' }); }
+    // Stop the trade
+    const updatedTrade = await mockTradeService.stopMockTrade(mockTradeId, userId);
 
-    res.status(200).json({ message: 'Mock trade stopped successfully', data: {} /* updatedTrade */ }); // Replace {} with actual data
+    if (!updatedTrade) {
+      return res.status(404).json({ message: 'Mock trade not found or already stopped' });
+    }
+
+    res.status(200).json({
+      message: 'Mock trade stopped successfully',
+      data: updatedTrade,
+    });
   } catch (error) {
     next(error);
   }
 };
 
 // Placeholder for potential future strategy backtest endpoint
-// export const getStrategyBacktest = async (req: Request, res: Response, next: NextFunction) => { ... }; 
+// export const getStrategyBacktest = async (req: Request, res: Response, next: NextFunction) => { ... };

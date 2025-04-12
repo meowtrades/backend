@@ -6,11 +6,16 @@ const router = Router();
 // Get user's balance across all chains
 router.get('/', balanceController.getUserBalances);
 
+router.get('/tokens', balanceController.getAllChainTokens);
+
 // Get user's balance for a specific chain
 router.get('/:chainId', balanceController.getChainBalance);
 
 // Get available tokens for a specific chain
 router.get('/:chainId/tokens', balanceController.getChainTokens);
+
+// Get balance for a specific token on a chain
+router.get('/:chainId/token/:tokenSymbol', balanceController.getTokenBalance);
 
 // Deposit funds to user's balance
 router.post('/deposit', balanceController.depositFunds);
@@ -21,4 +26,6 @@ router.post('/withdraw', balanceController.withdrawFunds);
 // Allocate funds to a strategy
 router.post('/allocate', balanceController.allocateFundsToStrategy);
 
-export default router; 
+// Get all chain tokens
+
+export default router;

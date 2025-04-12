@@ -4,7 +4,13 @@ import { createOrUpdateUser, getUserByAddress, getUserById } from './user.contro
 import analytics from './analytics/analytics.routes';
 import balance from './balance/balance.routes';
 
+import { fromNodeHeaders } from 'better-auth/node';
+import { auth } from '../../lib/auth'; //your better auth instance
+import { getSession } from '../../middleware/auth';
+
 const router = express.Router();
+
+router.use(getSession);
 
 // Create or update user
 router.post('/', createOrUpdateUser);
@@ -13,12 +19,17 @@ router.post('/', createOrUpdateUser);
 router.get('/address/:address', getUserByAddress);
 
 // Get user by ID
-router.get('/:userId', getUserById);
 
 // Analytics routes
 router.use('/analytics', analytics);
 
 // Balance routes
 router.use('/balance', balance);
+
+router.get('/me', async (req, res) => {
+  return res.json(req.user);
+});
+
+// router.get('/:userId', getUserById);
 
 export default router;
