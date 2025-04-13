@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { User } from '../../models/User';
 import { logger } from '../../utils/logger';
 import { z } from 'zod';
+import { TransactionAttempt } from '../../models/TransactionAttempt';
 
 export const createOrUpdateUserSchema = z.object({
   body: z.object({
@@ -93,5 +94,27 @@ export const getUserById = async (req: Request, res: Response) => {
       return res.status(400).json({ error: error.message });
     }
     res.status(500).json({ error: 'Failed to get user by ID' });
+  }
+};
+
+/**
+ * Get transaction attempts for a user
+ * @param req Request object with user ID
+ * @param res Response object
+ */
+export const getUserTransactionAttempts = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id || req.params.userId;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const transactions = await TransactionAttempt.find({ userId }).sort({ createdAt: -1 }).lean();
+
+    return res.status(200).json({ transactions });
+  } catch (error) {
+    console.error('Error fetching user transaction attempts:', error);
+    return res.status(500).json({ error: 'Failed to fetch transaction attempts' });
   }
 };

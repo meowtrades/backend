@@ -6,6 +6,11 @@ import mocktrades from './mocktrading/mocktrades.routes';
 
 const router = express.Router();
 
+// Health check endpoint for Cloud Run
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // User routes
 router.use('/user', user);
 
