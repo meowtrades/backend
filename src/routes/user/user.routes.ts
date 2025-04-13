@@ -1,6 +1,11 @@
 // src/routes/user.ts
 import express from 'express';
-import { createOrUpdateUser, getUserByAddress, getUserById } from './user.controllers';
+import {
+  createOrUpdateUser,
+  getUserByAddress,
+  getUserById,
+  getUserTransactionAttempts,
+} from './user.controllers';
 import analytics from './analytics/analytics.routes';
 import balance from './balance/balance.routes';
 
@@ -18,7 +23,8 @@ router.post('/', createOrUpdateUser);
 // Get user by address
 router.get('/address/:address', getUserByAddress);
 
-// Get user by ID
+// Get user transaction attempts
+router.get('/transactions', getUserTransactionAttempts);
 
 // Analytics routes
 router.use('/analytics', analytics);
