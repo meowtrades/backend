@@ -12,6 +12,7 @@ import balance from './balance/balance.routes';
 import { fromNodeHeaders } from 'better-auth/node';
 import { auth } from '../../lib/auth'; //your better auth instance
 import { getSession } from '../../middleware/auth';
+import { getUserStrategies } from './analytics/analytics.controllers';
 
 const router = express.Router();
 
@@ -31,6 +32,9 @@ router.use('/analytics', analytics);
 
 // Balance routes
 router.use('/balance', balance);
+
+// Strategies routes
+router.use('/strategies', getUserStrategies);
 
 router.get('/me', async (req, res) => {
   return res.json(req.user);

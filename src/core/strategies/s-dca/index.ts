@@ -1,6 +1,7 @@
 import { DCAPlugin, Frequency } from '../../types';
 import { InvestmentPlan, IInvestmentPlan } from '../../../models/InvestmentPlan';
 import { User } from '../../../models/User';
+import { UserBalance } from '../../../models/UserBalance';
 import cron from 'node-cron';
 import { logger } from '../../../utils/logger';
 import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
@@ -168,6 +169,36 @@ export class DCAService {
         }
 
         await plan.save();
+
+        // Update the user's wallet balance
+        try {
+          const userBalance = await UserBalance.findOne({ userId: plan.userId });
+          if (userBalance) {
+            const chainBalance = userBalance.balances.find(
+              b => b.chainId === plan.chain && b.tokenSymbol === 'USDT'
+            );
+
+            if (chainBalance) {
+              const currentBalance = parseFloat(chainBalance.balance);
+              chainBalance.balance = (currentBalance - executionAmount).toString();
+              chainBalance.lastUpdated = new Date();
+            } else {
+              userBalance.balances.push({
+                chainId: plan.chain,
+                tokenSymbol: 'USDT',
+                balance: (-executionAmount).toString(),
+                lastUpdated: new Date(),
+              });
+            }
+
+            await userBalance.save();
+            logger.info(`Updated wallet balance for user ${plan.userId} after plan execution.`);
+          } else {
+            logger.warn(`UserBalance record not found for user ${plan.userId}`);
+          }
+        } catch (balanceError) {
+          logger.error(`Failed to update wallet balance for user ${plan.userId}:`, balanceError);
+        }
 
         logger.info(
           `Successfully executed DCA plan: ${plan._id}, txHash: ${txHash}, amount: ${executionAmount}`
