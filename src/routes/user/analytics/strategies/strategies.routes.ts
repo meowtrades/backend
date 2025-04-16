@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import * as strategiesController from './strategies.controllers';
+import { getSession } from '../../../../middleware/auth';
 
 const router = Router();
 
+router.use(getSession);
 // Get User's strategies
 router.use('/', strategiesController.getUserStrategies);
 

@@ -59,11 +59,14 @@ export const getStrategyById = async (req: AuthenticatedRequest, res: Response) 
     const totalInvested = strategy.initialAmount + strategy.amount;
     const invested = strategy.amount;
     const profit = totalInvested - strategy.initialAmount;
+    const profitPercentage = ((profit / strategy.initialAmount) * 100).toFixed(2);
 
     const userStrategy: UserStrategy = {
       _id: strategy._id.toString(),
       totalInvested,
       invested,
+      profit,
+      profitPercentage: parseFloat(profitPercentage),
       initialAmount: strategy.initialAmount,
       frequency: strategy.frequency,
       amount: strategy.amount,
@@ -80,6 +83,8 @@ export const getStrategyById = async (req: AuthenticatedRequest, res: Response) 
 interface UserStrategy {
   _id: string;
   totalInvested: number;
+  profit: number;
+  profitPercentage: number;
   invested: number;
   initialAmount: number;
   frequency: string;
