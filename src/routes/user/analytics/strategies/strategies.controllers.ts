@@ -1,5 +1,7 @@
+import { logger } from 'ethers';
 import { InvestmentPlan } from '../../../../models/InvestmentPlan';
 import { Request, Response } from 'express';
+import { parse } from 'path';
 
 interface AuthenticatedRequest extends Request {}
 
@@ -49,27 +51,29 @@ export const getStrategyById = async (req: AuthenticatedRequest, res: Response) 
     }
 
     // Fetch the strategy by userId and strategyId
-    const strategy = await InvestmentPlan.findOne({ userId, _id: strategyId });
+    const strategy = await InvestmentPlan.findById(strategyId).where({ userId });
 
     if (!strategy) {
       return res.status(404).json({ message: 'Strategy not found' });
     }
 
     // Perform calculations for UserStrategy fields
-    const totalInvested = strategy.initialAmount + strategy.amount;
-    const invested = strategy.amount;
-    const profit = totalInvested - strategy.initialAmount;
-    const profitPercentage = ((profit / strategy.initialAmount) * 100).toFixed(2);
+    const totalInvested = parseFloat((strategy.initialAmount + strategy.amount).toFixed(2));
+    const invested = parseFloat(strategy.amount.toFixed(2));
+    const profit = parseFloat((totalInvested - strategy.initialAmount).toFixed(2));
+    const profitPercentage = parseFloat(((profit / strategy.initialAmount) * 100).toFixed(2));
+    const currentValue = parseFloat((strategy.totalInvested + strategy.amount).toFixed(2));
 
     const userStrategy: UserStrategy = {
       _id: strategy._id.toString(),
+      currentValue,
       totalInvested,
       invested,
       profit,
-      profitPercentage: parseFloat(profitPercentage),
-      initialAmount: strategy.initialAmount,
+      profitPercentage,
+      initialAmount: parseFloat(strategy.initialAmount.toFixed(2)),
       frequency: strategy.frequency,
-      amount: strategy.amount,
+      amount: parseFloat(strategy.amount.toFixed(2)),
       createdAt: strategy.createdAt.toISOString(),
       active: strategy.isActive,
     };
@@ -84,6 +88,7 @@ interface UserStrategy {
   _id: string;
   totalInvested: number;
   profit: number;
+  currentValue: number;
   profitPercentage: number;
   invested: number;
   initialAmount: number;

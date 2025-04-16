@@ -7,6 +7,8 @@ const router = Router();
 
 router.use(getSession);
 
+router.use('/strategies', strategyRouter);
+
 // Route to get user's historical performance data across all trades/strategies
 router.get('/performance/history', analyticsController.getUserPerformanceHistory);
 
@@ -18,7 +20,5 @@ router.get('/statistics/user', analyticsController.getUserStatistics);
 
 // Route to get platform-wide statistics (available to users)
 router.get('/statistics/platform', analyticsController.getPlatformStatistics);
-
-router.use('/strategies', strategyRouter);
 
 export default router;

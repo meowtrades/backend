@@ -4,14 +4,14 @@ import { getSession } from '../../../../middleware/auth';
 
 const router = Router();
 
-router.use(getSession);
+// router.use(getSession);
 // Get User's strategies
-router.use('/', strategiesController.getUserStrategies);
+router.get('/', strategiesController.getUserStrategies);
 
 // Get User's active strategies
 router.get('/active', strategiesController.getActiveStrategies);
 
 // Get one strategy by ID
-router.get('/:strategyId', strategiesController.getStrategyById);
+router.get('/:id', strategiesController.getStrategyById);
 
 export default router;
