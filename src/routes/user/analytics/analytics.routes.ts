@@ -18,4 +18,10 @@ router.get('/statistics/user', analyticsController.getUserStatistics);
 // Route to get platform-wide statistics (available to users)
 router.get('/statistics/platform', analyticsController.getPlatformStatistics);
 
+// Get User's strategies
+router.use('/strategies', analyticsController.getUserStrategies);
+
+// Get User's active strategies
+router.get('/strategies/active', analyticsController.getActiveStrategies);
+
 export default router;

@@ -240,6 +240,22 @@ export const getUserStrategies = async (req: AuthenticatedRequest, res: Response
     }
 
     // Fetch user's strategies from the database
+    const userStrategies = await InvestmentPlan.find({ userId });
+
+    res.status(200).json({ data: userStrategies });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error });
+  }
+};
+
+export const getActiveStrategies = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    // Fetch user's strategies from the database
     const userStrategies = await InvestmentPlan.find({ userId, isActive: true });
 
     res.status(200).json({ data: userStrategies });
