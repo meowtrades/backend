@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as analyticsController from './analytics.controllers';
 import { getSession } from '../../../middleware/auth';
+import strategyRouter from './strategies/strategies.routes';
 
 const router = Router();
 
@@ -18,10 +19,6 @@ router.get('/statistics/user', analyticsController.getUserStatistics);
 // Route to get platform-wide statistics (available to users)
 router.get('/statistics/platform', analyticsController.getPlatformStatistics);
 
-// Get User's strategies
-router.use('/strategies', analyticsController.getUserStrategies);
-
-// Get User's active strategies
-router.get('/strategies/active', analyticsController.getActiveStrategies);
+router.use('/strategies', strategyRouter);
 
 export default router;
