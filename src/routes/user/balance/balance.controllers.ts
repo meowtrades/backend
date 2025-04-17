@@ -10,6 +10,7 @@ import {
 import { getUserBalanceRecord } from '../../../core/services/balance.service';
 import { UserBalance } from '../../../models/UserBalance';
 import { User } from '../../../models/User';
+import { Admin } from '../../../models/Admin';
 
 // Extend Request type to include user
 interface AuthenticatedRequest extends Request {}
@@ -325,8 +326,6 @@ export const getAllChainTokens = async (req: Request, res: Response, next: NextF
   }
 };
 
-const adminEmails = ['kunalranarj2005@gmail.com'];
-
 export const allocateFundsToWallet = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -336,7 +335,13 @@ export const allocateFundsToWallet = async (
     // Check if the user is an admin
     const userEmail = req.user?.email;
 
-    if (!userEmail || !adminEmails.includes(userEmail)) {
+    if (!userEmail) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' });
+    }
+
+    const admin = await Admin.findOne({ email: userEmail });
+
+    if (!admin) {
       return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
 
