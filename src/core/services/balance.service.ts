@@ -59,7 +59,7 @@ export const getUserBalanceRecord = async (userId: string): Promise<IUserBalance
         initialBalances.push({
           chainId,
           tokenSymbol,
-          balance: '0',
+          balance: tokenSymbol === 'USDT' ? '500' : '0',
           lastUpdated: new Date(),
         });
       });

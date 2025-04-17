@@ -7,6 +7,10 @@ import {
   isTokenSupportedOnChain,
   getNativeTokenForChain,
 } from '../../../constants';
+import { getUserBalanceRecord } from '../../../core/services/balance.service';
+import { UserBalance } from '../../../models/UserBalance';
+import { User } from '../../../models/User';
+import { Admin } from '../../../models/Admin';
 
 // Extend Request type to include user
 interface AuthenticatedRequest extends Request {}
@@ -317,6 +321,78 @@ export const getAllChainTokens = async (req: Request, res: Response, next: NextF
   try {
     const tokens = await balanceService.getAllChainTokens();
     res.status(200).json({ data: tokens });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const allocateFundsToWallet = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Check if the user is an admin
+    const userEmail = req.user?.email;
+
+    if (!userEmail) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' });
+    }
+
+    const admin = await Admin.findOne({ email: userEmail });
+
+    if (!admin) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' });
+    }
+
+    const { email, amount, tokenSymbol } = req.body;
+
+    if (!email || !amount || !tokenSymbol) {
+      return res.status(400).json({ message: 'Email, amount, and token symbol are required' });
+    }
+
+    // Default chainId to Injective
+    const chainId = 'injective';
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Fetch and update user balance record in one operation
+    const userBalance = await UserBalance.findOneAndUpdate(
+      { userId: user._id },
+      { $inc: { 'balances.$[elem].balance': amount } },
+      {
+        new: true,
+        arrayFilters: [
+          {
+            'elem.chainId': chainId,
+            'elem.tokenSymbol': tokenSymbol,
+          },
+        ],
+      }
+    );
+
+    if (!userBalance) {
+      return res.status(404).json({ message: 'User or balance record not found' });
+    }
+
+    // Find the updated token balance
+    const tokenBalance = userBalance.balances.find(
+      balance => balance.chainId === chainId && balance.tokenSymbol === tokenSymbol
+    );
+
+    res.status(200).json({
+      message: 'Funds allocated successfully',
+      data: {
+        email,
+        chainId,
+        tokenSymbol,
+        newBalance: tokenBalance?.balance,
+      },
+    });
   } catch (error) {
     next(error);
   }

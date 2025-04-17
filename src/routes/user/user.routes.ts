@@ -3,14 +3,13 @@ import express from 'express';
 import {
   createOrUpdateUser,
   getUserByAddress,
+  getUserByEmail,
   getUserById,
   getUserTransactionAttempts,
+  isAdmin,
 } from './user.controllers';
 import analytics from './analytics/analytics.routes';
 import balance from './balance/balance.routes';
-
-import { fromNodeHeaders } from 'better-auth/node';
-import { auth } from '../../lib/auth'; //your better auth instance
 import { getSession } from '../../middleware/auth';
 
 const router = express.Router();
@@ -26,6 +25,9 @@ router.get('/address/:address', getUserByAddress);
 // Get user transaction attempts
 router.get('/transactions', getUserTransactionAttempts);
 
+// Check if user is admin
+router.get('/is-admin', isAdmin);
+
 // Analytics routes
 router.use('/analytics', analytics);
 
@@ -36,6 +38,7 @@ router.get('/me', async (req, res) => {
   return res.json(req.user);
 });
 
+router.get('/:email', getUserByEmail);
 // router.get('/:userId', getUserById);
 
 export default router;

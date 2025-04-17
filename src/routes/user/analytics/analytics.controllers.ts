@@ -15,6 +15,7 @@ export const getUserPerformanceHistory = async (
   res: Response,
   next: NextFunction
 ) => {
+  req.user;
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -145,6 +146,15 @@ export const getUserStatistics = async (
     const userBalance = await UserBalance.findOne({ userId });
 
     const totalInvestment = actualTrades.reduce((sum, plan) => sum + plan.totalInvested, 0);
+
+    // userBalance?.balances.forEach(balance => {
+    //   const plan = investmentPlans.find(plan => plan.chain === balance.chainId);
+    //   if (plan) {
+    //     const currentValue = balance.amount * plan.currentPrice; // Assuming currentPrice is available
+    //     plan.currentValue = currentValue; // Update the plan with current value
+    //   }
+    // });
+
     const activePlans = actualTrades.filter(plan => plan.isActive).length;
 
     // Calculate mock trade statistics

@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import * as analyticsController from './analytics.controllers';
 import { getSession } from '../../../middleware/auth';
+import strategyRouter from './strategies/strategies.routes';
 
 const router = Router();
 
 router.use(getSession);
+
+router.use('/strategies', strategyRouter);
 
 // Route to get user's historical performance data across all trades/strategies
 router.get('/performance/history', analyticsController.getUserPerformanceHistory);
