@@ -8,6 +8,9 @@ router.get('/', balanceController.getUserBalances);
 
 router.get('/tokens', balanceController.getAllChainTokens);
 
+// Allocate funds to a wallet
+router.post('/allocate/wallet', balanceController.allocateFundsToWallet);
+
 // Get user's balance for a specific chain
 router.get('/:chainId', balanceController.getChainBalance);
 
