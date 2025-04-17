@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger';
 import { z } from 'zod';
 import { TransactionAttempt } from '../../models/TransactionAttempt';
 import { UserBalance } from '../../models/UserBalance';
+import { Admin } from '../../models/Admin';
 
 export const createOrUpdateUserSchema = z.object({
   body: z.object({
@@ -153,5 +154,25 @@ export const getUserByEmail = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching user by email:', error);
     return res.status(500).json({ error: 'Failed to fetch user by email' });
+  }
+};
+
+export const isAdmin = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const admin = await Admin.findOne({ userId });
+
+    if (!admin) {
+      return res.status(403).json({ error: 'User is not an admin' });
+    }
+
+    res.status(200).json({ isAdmin: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

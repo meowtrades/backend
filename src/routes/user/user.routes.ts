@@ -6,6 +6,7 @@ import {
   getUserByEmail,
   getUserById,
   getUserTransactionAttempts,
+  isAdmin,
 } from './user.controllers';
 import analytics from './analytics/analytics.routes';
 import balance from './balance/balance.routes';
@@ -23,6 +24,9 @@ router.get('/address/:address', getUserByAddress);
 
 // Get user transaction attempts
 router.get('/transactions', getUserTransactionAttempts);
+
+// Check if user is admin
+router.get('/is-admin', isAdmin);
 
 // Analytics routes
 router.use('/analytics', analytics);
