@@ -4,6 +4,7 @@ import { PluginFactory } from '../strategies/s-dca/chains/factory';
 import { DCAService } from '../strategies/s-dca/index';
 import { User } from '../../models/User';
 import { RiskLevel, Frequency } from '../types';
+import { ChartDataTransformer } from '../transformers/chart-data.transformer';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -149,6 +150,20 @@ export class MockTradeService {
       return { tokenAmount, usdValue };
     } catch (error) {
       logger.error(`Error getting mock trade position:`, error);
+      throw error;
+    }
+  }
+
+  async getMockTradePositionForChart(
+    tradeId: string,
+    userId: string
+  ): Promise<{ x: number; y: number }[]> {
+    try {
+      const mockTrade = await this.getMockTradePosition(tradeId, userId);
+      const transformedData = ChartDataTransformer.transformToChartData([mockTrade]);
+      return transformedData;
+    } catch (error) {
+      logger.error(`Error transforming mock trade data for chart:`, error);
       throw error;
     }
   }

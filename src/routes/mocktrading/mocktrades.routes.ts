@@ -19,4 +19,7 @@ router.get('/:id', mockTradeController.getMockTradeDetails);
 // Route to stop an active mock trade
 router.patch('/:id/stop', mockTradeController.stopMockTrade);
 
+// filepath: /home/kunalrana/Desktop/intern/meowtrades/backend/src/routes/mockTrade.routes.ts
+router.get('/:tradeId/chart', mockTradeController.getMockTradeChartValues);
+
 export default router;

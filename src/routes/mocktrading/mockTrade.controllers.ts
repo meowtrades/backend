@@ -110,5 +110,16 @@ export const stopMockTrade = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const getMockTradeChartValues = async (req: Request, res: Response) => {
+  try {
+    const { tradeId } = req.params;
+    const userId = req.user.id;
+    const data = await mockTradeService.getMockTradePositionForChart(tradeId, userId);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch chart data' });
+  }
+};
+
 // Placeholder for potential future strategy backtest endpoint
 // export const getStrategyBacktest = async (req: Request, res: Response, next: NextFunction) => { ... };
