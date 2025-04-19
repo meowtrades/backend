@@ -2,6 +2,7 @@ import { logger } from 'ethers';
 import { InvestmentPlan } from '../../../../models/InvestmentPlan';
 import { Request, Response } from 'express';
 import { parse } from 'path';
+import { TransactionAttempt } from '../../../../models/TransactionAttempt';
 
 interface AuthenticatedRequest extends Request {}
 
@@ -79,6 +80,32 @@ export const getStrategyById = async (req: AuthenticatedRequest, res: Response) 
     };
 
     res.status(200).json({ data: userStrategy });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error });
+  }
+};
+
+export const getStrategyTransactions = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const planId = req.params.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    if (!planId) {
+      return res.status(400).json({ message: 'Strategy ID is required' });
+    }
+
+    // Fetch transactions for the specified strategy
+    const transactions = await TransactionAttempt.find({ userId, planId });
+
+    if (!transactions || transactions.length === 0) {
+      return res.status(404).json({ message: 'No transactions found for this strategy' });
+    }
+
+    res.status(200).json({ data: transactions });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error });
   }

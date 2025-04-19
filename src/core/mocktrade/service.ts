@@ -35,6 +35,7 @@ export const create = async (userId: string, input: CreateMockTradeInput): Promi
     tokenSymbol,
     amount,
     initialAmount: amount, // Default to the same amount
+    initialInvestment: amount, // Default to the same amount
     riskLevel,
     frequency,
     status: 'active',

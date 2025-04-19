@@ -8,6 +8,7 @@ export interface IMockTrade extends Document {
   tokenSymbol: string; // e.g., 'BTC', 'ETH'
   amount: number;
   initialAmount: number; // Initial investment amount, default $100
+  initialInvestment: number; // Initial investment amount, default $100
   startDate: Date;
   endDate?: Date; // Nullable, set when the trade is stopped
   status: 'active' | 'stopped';
@@ -69,6 +70,11 @@ const mockTradeSchema: Schema<IMockTrade> = new Schema(
       enum: Object.values(RiskLevel),
       required: true,
       default: RiskLevel.LOW_RISK, // Default to low risk level
+    },
+    initialInvestment: {
+      type: Number,
+      required: true,
+      default: 100, // Default to $100 as per requirements
     },
   },
   {
