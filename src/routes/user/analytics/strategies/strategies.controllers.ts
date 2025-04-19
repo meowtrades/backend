@@ -98,14 +98,29 @@ export const getStrategyTransactions = async (req: AuthenticatedRequest, res: Re
       return res.status(400).json({ message: 'Strategy Id is required' });
     }
 
-    // Fetch transactions for the specified strategy
-    const transactions = await TransactionAttempt.find({ userId, planId });
+    // Extract pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Fetch transactions for the specified strategy with pagination
+    const transactions = await TransactionAttempt.find({ userId, planId }).skip(skip).limit(limit);
+
+    const totalTransactions = await TransactionAttempt.countDocuments({ userId, planId });
 
     if (!transactions || transactions.length === 0) {
       return res.status(404).json({ message: 'No transactions found for this strategy' });
     }
 
-    res.status(200).json({ data: transactions });
+    res.status(200).json({
+      data: transactions,
+      pagination: {
+        total: totalTransactions,
+        page,
+        limit,
+        totalPages: Math.ceil(totalTransactions / limit),
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error });
   }
