@@ -1,33 +1,64 @@
+import { CreateMockTradeInput } from './../../core/mocktrade/service';
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { MockTradeService } from '../../core/services/mockTrade.service';
+// import { z } from 'better-auth/*';
+import { Frequency, RiskLevel } from '../../core/types';
+import { z } from 'zod';
+// CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
+
+/**
+ * strategyId: string;
+   tokenSymbol: string;
+   amount: number;
+   riskLevel: RiskLevel;
+   frequency: Frequency;
+
+ */
+const createMockTradeSchema = z.object({
+  strategyId: z.string().min(1, 'strategyId is required'),
+  tokenSymbol: z.string().min(1, 'tokenSymbol is required'),
+  amount: z.number().positive('Initial investment must be a positive number').default(100),
+  riskLevel: z.nativeEnum(RiskLevel).default(RiskLevel.MEDIUM_RISK),
+  frequency: z.nativeEnum(Frequency).default(Frequency.DAILY),
+});
 
 export const createMockTrade = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user.id;
 
-    const { strategyId, tokenSymbol, initialInvestment } = req.body;
+    let data: z.infer<typeof createMockTradeSchema>;
+
+    try {
+      data = createMockTradeSchema.parse(req.body);
+    } catch (error) {
+      return res.status(400).json({ message: 'Invalid request data' });
+    }
+
+    const { strategyId, tokenSymbol, amount, riskLevel, frequency } = data;
 
     // Validate required fields
-    if (!strategyId || !tokenSymbol || !initialInvestment) {
-      return res.status(400).json({
-        message:
-          'Missing required fields. strategyId, tokenSymbol, and initialInvestment are required.',
-      });
-    }
+    // if (!strategyId || !tokenSymbol || !initialInvestment) {
+    //   return res.status(400).json({
+    //     message:
+    //       'Missing required fields. strategyId, tokenSymbol, and initialInvestment are required.',
+    //   });
+    // }
 
     // Validate investment amount
-    if (isNaN(Number(initialInvestment)) || Number(initialInvestment) <= 0) {
-      return res.status(400).json({ message: 'Initial investment must be a positive number' });
-    }
+    // if (isNaN(Number(amount)) || Number(amount) <= 0) {
+    //   return res.status(400).json({ message: 'Initial investment must be a positive number' });
+    // }
 
     // Create the mock trade
     const mockTrade = await mockTradeService.createMockTrade(userId, {
       strategyId,
-      tokenSymbol,
-      initialInvestment: Number(initialInvestment),
+      tokenSymbol: tokenSymbol.toUpperCase(),
+      amount,
+      riskLevel,
+      frequency,
     });
 
     res.status(201).json({

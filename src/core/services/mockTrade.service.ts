@@ -5,6 +5,7 @@ import { DCAService } from '../strategies/s-dca/index';
 import { User } from '../../models/User';
 import { RiskLevel, Frequency } from '../types';
 import { ChartDataTransformer } from '../transformers/chart-data.transformer';
+import { CreateMockTradeInput } from '../mocktrade/service';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -24,14 +25,7 @@ export class MockTradeService {
   /**
    * Create a new mock trade for a user
    */
-  async createMockTrade(
-    userId: string,
-    data: {
-      strategyId: string;
-      tokenSymbol: string;
-      initialInvestment: number;
-    }
-  ): Promise<IMockTrade> {
+  async createMockTrade(userId: string, data: CreateMockTradeInput): Promise<IMockTrade> {
     try {
       logger.info(`Creating mock trade for user ${userId}`, data);
 
@@ -46,7 +40,10 @@ export class MockTradeService {
         userId,
         strategyId: data.strategyId,
         tokenSymbol: data.tokenSymbol.toUpperCase(),
-        initialInvestment: data.initialInvestment,
+        initialAmount: data.amount,
+        amount: data.amount, // Default to the same amount
+        riskLevel: data.riskLevel || RiskLevel.MEDIUM_RISK, // Default to medium risk
+        frequency: data.frequency || Frequency.DAILY, // Default to daily frequency
         status: 'active',
       });
 
@@ -55,7 +52,7 @@ export class MockTradeService {
 
       // Set up a test DCA plan using the mock plugin
       await this.dcaService.createPlan(userId, {
-        amount: data.initialInvestment,
+        amount: data.amount,
         frequency: Frequency.TEST_MINUTE, // Use a test frequency for quick feedback
         userWalletAddress: userId, // Use userId as wallet address for mock purposes
         riskLevel: RiskLevel.MEDIUM_RISK, // Default to medium risk

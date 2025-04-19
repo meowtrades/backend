@@ -1,18 +1,28 @@
+import { RiskLevel } from './../core/types/index';
 import mongoose, { Document, Schema } from 'mongoose';
+import { Frequency } from '../core/types';
 
 export interface IMockTrade extends Document {
   userId: string; // Assuming user IDs are MongoDB ObjectIds
   strategyId: string; // Identifier for the chosen strategy
   tokenSymbol: string; // e.g., 'BTC', 'ETH'
-  initialInvestment: number;
+  amount: number;
+  initialAmount: number; // Initial investment amount, default $100
   startDate: Date;
   endDate?: Date; // Nullable, set when the trade is stopped
   status: 'active' | 'stopped';
+  frequency: Frequency;
+  riskLevel: RiskLevel;
   // We might store calculated performance snapshots later, but start simple
 }
 
 const mockTradeSchema: Schema<IMockTrade> = new Schema(
   {
+    amount: {
+      type: Number,
+      required: true,
+      default: 0, // Default to 0, can be updated later
+    },
     userId: {
       type: String,
       ref: 'User', // Link to the User model, adjust if your user model name is different
@@ -29,7 +39,7 @@ const mockTradeSchema: Schema<IMockTrade> = new Schema(
       uppercase: true,
       trim: true,
     },
-    initialInvestment: {
+    initialAmount: {
       type: Number,
       required: true,
       default: 100, // Default to $100 as per requirements
@@ -47,6 +57,18 @@ const mockTradeSchema: Schema<IMockTrade> = new Schema(
       default: 'active',
       required: true,
       index: true,
+    },
+    frequency: {
+      type: String,
+      enum: Object.values(Frequency),
+      required: true,
+      default: Frequency.DAILY, // Default to daily frequency
+    },
+    riskLevel: {
+      type: String,
+      enum: Object.values(RiskLevel),
+      required: true,
+      default: RiskLevel.LOW_RISK, // Default to low risk level
     },
   },
   {
