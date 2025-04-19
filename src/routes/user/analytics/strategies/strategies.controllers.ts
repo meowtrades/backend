@@ -95,7 +95,7 @@ export const getStrategyTransactions = async (req: AuthenticatedRequest, res: Re
     }
 
     if (!planId) {
-      return res.status(400).json({ message: 'Strategy ID is required' });
+      return res.status(400).json({ message: 'Strategy Id is required' });
     }
 
     // Fetch transactions for the specified strategy
