@@ -1,4 +1,3 @@
-import { FetchedData } from '../mock.fetcher';
 import { DataProviderInterface, Interval } from './provider.interface';
 import axios from 'axios'; // Import axios for HTTP requests
 
