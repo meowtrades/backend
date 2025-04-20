@@ -1,6 +1,10 @@
 import { FetchedData } from '../mock.fetcher';
 import { DataProviderInterface, Interval } from './provider.interface';
 
+/**
+ * CoinGeckoDataProvider class implements the DataProviderInterface.
+ * It is responsible for fetching data from the CoinGecko API.
+ */
 export class CoinGeckoDataProvider implements DataProviderInterface {
   fetchData(
     tokenSymbol: string, // e.g. "USDT"
