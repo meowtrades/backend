@@ -61,9 +61,9 @@ export const getStrategyById = async (req: AuthenticatedRequest, res: Response) 
     // Perform calculations for UserStrategy fields
     const totalInvested = parseFloat((strategy.initialAmount + strategy.amount).toFixed(2));
     const invested = parseFloat(strategy.amount.toFixed(2));
-    const profit = parseFloat((totalInvested - strategy.initialAmount).toFixed(2));
-    const profitPercentage = parseFloat(((profit / strategy.initialAmount) * 100).toFixed(2));
     const currentValue = parseFloat((strategy.totalInvested + strategy.amount).toFixed(2));
+    const profit = parseFloat((currentValue - totalInvested).toFixed(2));
+    const profitPercentage = parseFloat(((profit / strategy.initialAmount) * 100).toFixed(2));
 
     const userStrategy: UserStrategy = {
       _id: strategy._id.toString(),
