@@ -10,9 +10,9 @@ export class DataFetcher {
   constructor(
     private readonly dataProvider: DataProviderInterface,
     private readonly tokenSymbol: string,
-    private readonly interval: Interval,
     private readonly startTime: Date,
     private readonly endTime: Date,
+    private readonly interval: Interval,
     private readonly chainId?: string
   ) {}
 
@@ -28,9 +28,9 @@ export class DataFetcher {
     try {
       const data = await this.dataProvider.fetchData(
         this.tokenSymbol,
-        this.interval,
         this.startTime,
         this.endTime,
+        this.interval,
         this.chainId
       );
       return data;

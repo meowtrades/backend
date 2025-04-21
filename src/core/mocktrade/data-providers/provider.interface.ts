@@ -1,6 +1,6 @@
 import { FetchedData } from '../mock.fetcher';
 
-export type Interval = '1d' | '1w' | '1m' | '3m' | '6m' | '1y';
+export type Interval = string;
 
 /**
  * DataProviderInterface defines the contract for data providers.
@@ -18,9 +18,9 @@ export interface DataProviderInterface {
    */
   fetchData(
     tokenSymbol: string, // e.g. "USDT"
-    interval: Interval, // resolution of data points
     startTime: Date,
     endTime: Date,
+    interval: Interval, // resolution of data points
     chainId?: string // optional for non-chain-specific providers like CoinGecko
   ): Promise<FetchedData>;
 }

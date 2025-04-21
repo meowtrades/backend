@@ -4,8 +4,11 @@ import { PluginFactory } from '../strategies/s-dca/chains/factory';
 import { DCAService } from '../strategies/s-dca/index';
 import { User } from '../../models/User';
 import { RiskLevel, Frequency } from '../types';
-import { ChartDataTransformer } from '../transformers/chart-data.transformer';
 import { CreateMockTradeInput } from '../mocktrade/service';
+import { DataFetcher } from '../mocktrade/mock.fetcher';
+import { CoinGeckoDataProvider } from '../mocktrade/data-providers/coingecko.provider';
+import { PythProvider, PythProviderInterval } from '../mocktrade/data-providers/pyth.provider';
+import { Interval } from '../mocktrade/data-providers/provider.interface';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -151,17 +154,17 @@ export class MockTradeService {
     }
   }
 
-  async getMockTradePositionForChart(
-    tradeId: string,
-    userId: string
-  ): Promise<{ x: number; y: number }[]> {
-    try {
-      const mockTrade = await this.getMockTradePosition(tradeId, userId);
-      const transformedData = ChartDataTransformer.transformToChartData([mockTrade]);
-      return transformedData;
-    } catch (error) {
-      logger.error(`Error transforming mock trade data for chart:`, error);
-      throw error;
-    }
+  async fetchMockData() {
+    const fetcher = new DataFetcher(
+      // new CoinGeckoDataProvider(),
+      new PythProvider(),
+      'Crypto.USDT/USD',
+      new Date(Date.now() - 1000 * 60 * 60 * 24 * 30), // 30 days
+      new Date(Date.now()),
+      'M' as PythProviderInterval
+    );
+
+    const data = await fetcher.fetchData();
+    return data;
   }
 }

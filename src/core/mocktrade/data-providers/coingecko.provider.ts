@@ -22,15 +22,17 @@ export interface FetchedDataPoint {
 export class CoinGeckoDataProvider implements DataProviderInterface {
   async fetchData(
     tokenSymbol: string, // e.g. "USDT"
-    interval: Interval, // resolution of data points
     startTime: Date,
     endTime: Date,
+    interval: Interval, // Won't work of CoinGecko since it automatically sets the interval
     chainId?: string // optional for non-chain-specific providers like CoinGecko
   ): Promise<FetchedDataPoint[]> {
+    // API endpoint for CoinGecko
     const baseUrl = 'https://api.coingecko.com/api/v3/coins';
     const vsCurrency = 'usd'; // Assuming USD as the base currency
-    const fromTimestamp = Math.floor(startTime.getTime() / 1000);
-    const toTimestamp = Math.floor(endTime.getTime() / 1000);
+    // const fromTimestamp = Math.floor(startTime.getTime() / 1000);
+    const fromTimestamp = 1740137151;
+    const toTimestamp = 1745230778;
 
     try {
       const response = await axios.get(

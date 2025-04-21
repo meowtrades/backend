@@ -4,6 +4,8 @@ import { getSession } from '../../middleware/auth';
 
 const router = Router();
 
+router.get('/fetch', mockTradeController.fetchMockData);
+
 router.use(getSession);
 
 // Route to create a new mock trade
@@ -20,6 +22,5 @@ router.get('/:id', mockTradeController.getMockTradeDetails);
 router.patch('/:id/stop', mockTradeController.stopMockTrade);
 
 // filepath: /home/kunalrana/Desktop/intern/meowtrades/backend/src/routes/mockTrade.routes.ts
-router.get('/:tradeId/chart', mockTradeController.getMockTradeChartValues);
 
 export default router;

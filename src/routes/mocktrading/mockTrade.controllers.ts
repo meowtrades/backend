@@ -39,19 +39,6 @@ export const createMockTrade = async (req: Request, res: Response, next: NextFun
 
     const { strategyId, tokenSymbol, amount, riskLevel, frequency } = data;
 
-    // Validate required fields
-    // if (!strategyId || !tokenSymbol || !initialInvestment) {
-    //   return res.status(400).json({
-    //     message:
-    //       'Missing required fields. strategyId, tokenSymbol, and initialInvestment are required.',
-    //   });
-    // }
-
-    // Validate investment amount
-    // if (isNaN(Number(amount)) || Number(amount) <= 0) {
-    //   return res.status(400).json({ message: 'Initial investment must be a positive number' });
-    // }
-
     // Create the mock trade
     const mockTrade = await mockTradeService.createMockTrade(userId, {
       strategyId,
@@ -141,16 +128,21 @@ export const stopMockTrade = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const getMockTradeChartValues = async (req: Request, res: Response) => {
+export const fetchMockData = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { tradeId } = req.params;
-    const userId = req.user.id;
-    const data = await mockTradeService.getMockTradePositionForChart(tradeId, userId);
-    res.json(data);
+    const data = await mockTradeService.fetchMockData();
+
+    console.log(data);
+
+    return res.status(200).json({
+      message: 'Mock data fetched successfully',
+      data,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch chart data' });
+    console.log(error);
+    return res.status(500).json({
+      message: 'Error fetching mock data',
+      error,
+    });
   }
 };
-
-// Placeholder for potential future strategy backtest endpoint
-// export const getStrategyBacktest = async (req: Request, res: Response, next: NextFunction) => { ... };
