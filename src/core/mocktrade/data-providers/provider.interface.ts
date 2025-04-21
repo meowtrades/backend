@@ -20,7 +20,7 @@ export interface DataProviderInterface {
     tokenSymbol: string, // e.g. "USDT"
     startTime: Date,
     endTime: Date,
-    interval: Interval, // resolution of data points
-    chainId?: string // optional for non-chain-specific providers like CoinGecko
+    interval: string, // resolution of data points
+    chainId?: Interval // optional for non-chain-specific providers like CoinGecko
   ): Promise<FetchedData>;
 }

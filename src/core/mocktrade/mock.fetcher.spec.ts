@@ -19,10 +19,10 @@ describe('DataFetcher', () => {
     dataFetcher = new DataFetcher(
       mockDataProvider,
       tokenSymbol,
-      chainId,
-      interval,
       startTime,
-      endTime
+      endTime,
+      interval,
+      chainId
     );
   });
 
