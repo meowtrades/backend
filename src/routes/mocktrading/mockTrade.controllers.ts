@@ -146,3 +146,20 @@ export const fetchMockData = async (req: Request, res: Response, next: NextFunct
     });
   }
 };
+
+export async function checkMockData(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = await mockTradeService.checkMockData();
+
+    return res.status(200).json({
+      message: 'Mock data checked successfully',
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: 'Error checking mock data',
+      error,
+    });
+  }
+}

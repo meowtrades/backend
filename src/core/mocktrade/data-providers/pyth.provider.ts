@@ -4,6 +4,16 @@ import { DataProviderInterface, Interval } from './provider.interface';
 
 export type PythProviderInterval = '1' | '5' | '15' | '30' | '60' | '240' | 'D' | 'W' | 'M';
 
+export type PythProviderData = {
+  t: number[];
+  c: number[];
+  o: number[];
+  h: number[];
+  l: number[];
+  v: number[];
+  s: string;
+};
+
 export class PythProvider implements DataProviderInterface {
   private static readonly baseUrl: string =
     'https://benchmarks.pyth.network/v1/shims/tradingview/history';
@@ -14,7 +24,7 @@ export class PythProvider implements DataProviderInterface {
     endTime: Date,
     interval: PythProviderInterval,
     chainId?: string
-  ): Promise<FetchedData> {
+  ): Promise<PythProviderData> {
     // PARAMS ?symbol=Crypto.BTC%2FUSD&resolution=1&from=1684137600&to=1684141200
     const response = await axios.get(PythProvider.baseUrl, {
       params: {

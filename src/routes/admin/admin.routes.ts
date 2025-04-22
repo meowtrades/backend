@@ -13,4 +13,4 @@ router.get('/active-plans', getAllActivePlans);
 // Stop all DCA plans
 router.post('/stop-all-plans', stopAllPlans);
 
-export default router; 
+export default router;

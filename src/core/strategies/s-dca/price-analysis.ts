@@ -12,7 +12,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface PriceData {
+export interface PriceData {
   date: string;
   timestamp: number; // Added timestamp for easier comparison
   price: number;

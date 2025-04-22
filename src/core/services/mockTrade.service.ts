@@ -7,8 +7,15 @@ import { RiskLevel, Frequency } from '../types';
 import { CreateMockTradeInput } from '../mocktrade/service';
 import { DataFetcher } from '../mocktrade/mock.fetcher';
 import { CoinGeckoDataProvider } from '../mocktrade/data-providers/coingecko.provider';
-import { PythProvider, PythProviderInterval } from '../mocktrade/data-providers/pyth.provider';
+import {
+  PythProvider,
+  PythProviderData,
+  PythProviderInterval,
+} from '../mocktrade/data-providers/pyth.provider';
 import { Interval } from '../mocktrade/data-providers/provider.interface';
+import { PriceData } from './price.service';
+import { SDCAStrategy } from '../mocktrade/strategies/s-dca.strategy';
+import { MockExecutor } from '../mocktrade/mock.executor';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -159,12 +166,35 @@ export class MockTradeService {
       // new CoinGeckoDataProvider(),
       new PythProvider(),
       'Crypto.USDT/USD',
-      new Date(Date.now() - 1000 * 60 * 60 * 24 * 30), // 30 days
+      new Date(Date.now() - 1000 * 60 * 60 * 24 * 30 * 7), // 30 days
       new Date(Date.now()),
       'M' as PythProviderInterval
     );
 
-    const data = await fetcher.fetchData();
+    const data = await fetcher.fetchData<PythProviderData>();
     return data;
+  }
+
+  async checkMockData() {
+    const data = await this.fetchMockData();
+
+    const dataPoints = [];
+
+    for (let i = 0; i < data.t.length; i++) {
+      const dataPoint: PriceData = {
+        date: new Date(data.t[i] * 1000).toISOString(),
+        price: data.c[i],
+        timestamp: data.t[i],
+      };
+      dataPoints.push(dataPoint);
+    }
+
+    const strat = new SDCAStrategy();
+
+    // const executor = new MockExecutor(strat);
+
+    // const result = await executor.executePlan(dataPoints);
+
+    return await strat.executePlan(dataPoints);
   }
 }

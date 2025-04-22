@@ -24,7 +24,7 @@ export class DataFetcher {
    * This method handles any errors that may occur during the data fetching process.
    * If an error occurs, it logs the error and rethrows it for further handling.
    */
-  async fetchData(): Promise<FetchedData> {
+  async fetchData<T>(): Promise<T> {
     try {
       const data = await this.dataProvider.fetchData(
         this.tokenSymbol,
