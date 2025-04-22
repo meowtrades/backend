@@ -137,7 +137,6 @@ export async function calculatePriceAnalysis(
         `,
       },
     ],
-    response_format: { type: 'json_object' },
   });
 
   // Parse the JSON response
