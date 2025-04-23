@@ -26,19 +26,28 @@ export class DataFetcher {
    */
   async fetchData<T>(): Promise<T> {
     // 30 Days
-    // const initialDifference = 30 * 24 * 60 * 60 * 1000;
+    const initialDifference = 30 * 24 * 60 * 60 * 1000;
 
     try {
-      // const startTime = new Date(this.startTime.getTime()  - initialDifference);
+      const startTime = new Date(this.startTime.getTime() - initialDifference);
 
+      /**
+       * ? Data fetched must be since 30d before the start time
+       * to ensure that the strategy has enough data to analyze.
+       *
+       * The analyzer will calculate the moving average of the last 30 days
+       * so it'll need data from 30 days before the start time. To calculate
+       * the moving average of the first day, it needs data from the previous 30 days.
+       */
       const data = await this.dataProvider.fetchData(
         this.tokenSymbol,
-        this.startTime,
+        // this.startTime,
+        startTime,
         this.endTime,
         this.interval,
         this.chainId
       );
-      return data;
+      return { ...data, days: data.t.length } as T;
     } catch (error) {
       console.error('Error fetching data:', error);
       throw error;

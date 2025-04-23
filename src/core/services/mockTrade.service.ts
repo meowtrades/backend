@@ -166,9 +166,10 @@ export class MockTradeService {
       // new CoinGeckoDataProvider(),
       new PythProvider(),
       'Crypto.USDT/USD',
-      new Date(Date.now() - 1000 * 60 * 60 * 24 * 30 * 7), // 30 days
+      // new Date(Date.now() - 1000 * 60 * 60 * 24 * 30 * 7), // 30 days
+      new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days agi
       new Date(Date.now()),
-      'M' as PythProviderInterval
+      'D' as PythProviderInterval
     );
 
     const data = await fetcher.fetchData<PythProviderData>();
@@ -194,10 +195,12 @@ export class MockTradeService {
     const initialAmount = 1000;
     const amount = 1000;
 
+    const executor = new MockExecutor(strat);
+
     // const executor = new MockExecutor(strat);
 
     // const result = await executor.executePlan(dataPoints);
 
-    return await strat.executePlan(dataPoints, initialAmount, amount);
+    return await executor.execute(dataPoints, initialAmount, amount);
   }
 }

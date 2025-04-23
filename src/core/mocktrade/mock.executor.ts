@@ -1,3 +1,4 @@
+import { PriceData } from '../strategies/s-dca/price-analysis';
 import { Strategy } from '../strategies/strategies.interface';
 import { FetchedData } from './mock.fetcher';
 
@@ -20,9 +21,28 @@ export class MockExecutor {
    * The strategy's executePlan method is expected to return a StrategyOutput.
    * The output can be used for further processing or logging.
    */
-  async execute(data: FetchedData[]): Promise<ExecutorOutput> {
+  async execute(
+    dataPoints: PriceData[],
+    initialAmount: number,
+    amount: number
+  ): Promise<ExecutorOutput> {
     try {
-      const results = data.map(dataPoint => this.strategy.executePlan(dataPoint));
+      const results: ExecutorOutput[] = [];
+
+      for (let start = 30; start < dataPoints.length; start++) {
+        const dataPoint = dataPoints[start];
+        const executionAmount = await this.strategy.executePlan(
+          dataPoints.slice(start - 30, start),
+          initialAmount,
+          amount
+        );
+
+        results.push({
+          price: executionAmount,
+          timestamp: dataPoint.timestamp,
+        });
+      }
+
       return results;
     } catch (error) {
       console.error('Error executing strategy:', error);

@@ -35,8 +35,6 @@ export class SDCAStrategy implements Strategy {
       executionAmount = updatedAmount + randomNumber;
     }
 
-    return {
-      price: executionAmount,
-    };
+    return executionAmount;
   }
 }
