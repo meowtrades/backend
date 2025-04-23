@@ -191,10 +191,13 @@ export class MockTradeService {
 
     const strat = new SDCAStrategy();
 
+    const initialAmount = 1000;
+    const amount = 1000;
+
     // const executor = new MockExecutor(strat);
 
     // const result = await executor.executePlan(dataPoints);
 
-    return await strat.executePlan(dataPoints);
+    return await strat.executePlan(dataPoints, initialAmount, amount);
   }
 }

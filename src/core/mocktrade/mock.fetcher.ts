@@ -25,7 +25,12 @@ export class DataFetcher {
    * If an error occurs, it logs the error and rethrows it for further handling.
    */
   async fetchData<T>(): Promise<T> {
+    // 30 Days
+    // const initialDifference = 30 * 24 * 60 * 60 * 1000;
+
     try {
+      // const startTime = new Date(this.startTime.getTime()  - initialDifference);
+
       const data = await this.dataProvider.fetchData(
         this.tokenSymbol,
         this.startTime,
