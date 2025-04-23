@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { MockTradeService } from '../../core/services/mockTrade.service';
 // import { z } from 'better-auth/*';
-import { Frequency, RiskLevel } from '../../core/types';
+import { Frequency, Range, RiskLevel } from '../../core/types';
 import { z } from 'zod';
 // CreateMockTradeInput;
 // Initialize the mock trade service
@@ -163,3 +163,47 @@ export async function checkMockData(req: Request, res: Response, next: NextFunct
     });
   }
 }
+
+export const getMockChartData = async (req: Request, res: Response, next: NextFunction) => {
+  const planId = req.params.id;
+  const range = req.query.range as string;
+
+  if (!mongoose.Types.ObjectId.isValid(planId)) {
+    return res.status(400).json({ message: 'Invalid plan ID' });
+  }
+
+  // // Validate the range query parameter
+  // const validRanges = Object.values(Range);
+  // if (range && !validRanges.includes(range as Range)) {
+  //   return res.status(400).json({ message: 'Invalid range value' });
+  // }
+
+  try {
+    // const userId = req.user.id;
+    const userId = '68032209abe21d430cc72cfc'; // Replace with actual user ID from request
+
+    // Get the mock trade details
+    const mockTrade = await mockTradeService.getMockTradeDetails(planId, userId);
+
+    if (!mockTrade) {
+      return res.status(404).json({ message: 'Mock trade not found or access denied' });
+    }
+
+    // Get the chart data
+    const chartData = await mockTradeService.getMockChartData(
+      mockTrade.tokenSymbol,
+      range,
+      mockTrade.frequency,
+      mockTrade.initialAmount,
+      mockTrade.amount,
+      mockTrade.riskLevel
+    );
+
+    res.status(200).json({
+      message: 'Mock chart data fetched successfully',
+      data: chartData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

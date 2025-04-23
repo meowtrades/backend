@@ -8,6 +8,8 @@ router.get('/fetch', mockTradeController.fetchMockData);
 
 router.get('/check', mockTradeController.checkMockData);
 
+router.get('/chart/:id', mockTradeController.getMockChartData);
+
 router.use(getSession);
 
 // Route to create a new mock trade

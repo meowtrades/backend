@@ -47,6 +47,12 @@ export class DataFetcher {
         this.interval,
         this.chainId
       );
+
+      console.log(data);
+      if (data.s === 'error') {
+        throw new Error('Error fetching data from provider');
+      }
+
       return { ...data, days: data.t.length } as T;
     } catch (error) {
       console.error('Error fetching data:', error);

@@ -3,7 +3,7 @@ import { logger } from '../../utils/logger';
 import { PluginFactory } from '../strategies/s-dca/chains/factory';
 import { DCAService } from '../strategies/s-dca/index';
 import { User } from '../../models/User';
-import { RiskLevel, Frequency } from '../types';
+import { RiskLevel, Frequency, Range } from '../types';
 import { CreateMockTradeInput } from '../mocktrade/service';
 import { DataFetcher } from '../mocktrade/mock.fetcher';
 import { CoinGeckoDataProvider } from '../mocktrade/data-providers/coingecko.provider';
@@ -16,6 +16,8 @@ import { Interval } from '../mocktrade/data-providers/provider.interface';
 import { PriceData } from './price.service';
 import { SDCAStrategy } from '../mocktrade/strategies/s-dca.strategy';
 import { MockExecutor } from '../mocktrade/mock.executor';
+import { ParsedQs } from 'qs';
+import { frequencyToInterval, rangeToDays } from '../../utils/convertors';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -201,6 +203,53 @@ export class MockTradeService {
 
     // const result = await executor.executePlan(dataPoints);
 
-    return await executor.execute(dataPoints, initialAmount, amount);
+    return await executor.execute(dataPoints, initialAmount, amount, RiskLevel.MEDIUM_RISK);
+  }
+
+  /**
+   *
+   * @param tokenSymbol
+   * @param range
+   * @param interval
+   * @returns
+   *
+   * Initializes a DataFetcher instance with the specified token symbol, range, and interval.
+   * Fetches data from the PythProvider and processes it into an array of PriceData objects.
+   * The data is then returned as an array of PriceData objects.
+   */
+  async getMockChartData(
+    tokenSymbol: string,
+    range: string | Range,
+    frequency: Frequency | string,
+    initialAmount: number,
+    amount: number,
+    risk: RiskLevel
+  ) {
+    const days = isNaN(Number(range)) ? rangeToDays(range as Range) : Number(range);
+
+    // Start from days ago
+    const startTIme = new Date(Date.now() - 1000 * 60 * 60 * 24 * days);
+    const endTime = new Date(Date.now());
+    const interval = frequencyToInterval(frequency as Frequency);
+
+    const fetcher = new DataFetcher(new PythProvider(), tokenSymbol, startTIme, endTime, interval);
+
+    const data = await fetcher.fetchData<PythProviderData>();
+
+    const dataPoints: PriceData[] = [];
+
+    for (let i = 0; i < data.t.length; i++) {
+      const dataPoint: PriceData = {
+        date: new Date(data.t[i] * 1000).toISOString(),
+        price: data.c[i],
+        timestamp: data.t[i],
+      };
+      dataPoints.push(dataPoint);
+    }
+
+    const strat = new SDCAStrategy();
+    const executor = new MockExecutor(strat);
+
+    return await executor.execute(dataPoints, initialAmount, amount, risk);
   }
 }

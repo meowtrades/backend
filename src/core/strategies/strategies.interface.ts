@@ -1,4 +1,5 @@
 import { FetchedData } from '../mocktrade/mock.fetcher';
+import { RiskLevel } from '../types';
 import { PriceData } from './s-dca/price-analysis';
 
 export type StrategyOutput = any;
@@ -14,6 +15,7 @@ export interface Strategy {
   executePlan(
     dataPoints: PriceData[],
     initialAmount: number,
-    amount: number
+    amount: number,
+    risk: RiskLevel
   ): Promise<StrategyOutput>;
 }
