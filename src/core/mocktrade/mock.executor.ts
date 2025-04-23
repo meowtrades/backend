@@ -1,6 +1,5 @@
 import { PriceData } from '../strategies/s-dca/price-analysis';
 import { Strategy } from '../strategies/strategies.interface';
-import { FetchedData } from './mock.fetcher';
 
 export type ExecutorOutput = any;
 
@@ -27,23 +26,24 @@ export class MockExecutor {
     amount: number
   ): Promise<ExecutorOutput> {
     try {
-      const results: ExecutorOutput[] = [];
+      const results: Promise<number>[] = [];
 
       for (let start = 30; start < dataPoints.length; start++) {
-        const dataPoint = dataPoints[start];
-        const executionAmount = await this.strategy.executePlan(
+        const executionAmount: Promise<number> = this.strategy.executePlan(
           dataPoints.slice(start - 30, start),
           initialAmount,
           amount
         );
 
-        results.push({
-          price: executionAmount,
-          timestamp: dataPoint.timestamp,
-        });
+        results.push(executionAmount);
       }
 
-      return results;
+      const resolvedResults = await Promise.all(results);
+
+      return resolvedResults.map((result, index) => ({
+        timestamp: dataPoints[index + 30].timestamp,
+        price: result,
+      }));
     } catch (error) {
       console.error('Error executing strategy:', error);
       throw error;
