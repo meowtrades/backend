@@ -9,14 +9,6 @@ import { z } from 'zod';
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
 
-/**
- * strategyId: string;
-   tokenSymbol: string;
-   amount: number;
-   riskLevel: RiskLevel;
-   frequency: Frequency;
-
- */
 const createMockTradeSchema = z.object({
   strategyId: z.string().min(1, 'strategyId is required'),
   tokenSymbol: z.string().min(1, 'tokenSymbol is required'),
@@ -180,7 +172,6 @@ export const getMockChartData = async (req: Request, res: Response, next: NextFu
 
   try {
     const userId = req.user.id;
-    // const userId = '68032209abe21d430cc72cfc'; // Replace with actual user ID from request
 
     // Get the mock trade details
     const mockTrade = await mockTradeService.getMockTradeDetails(planId, userId);
