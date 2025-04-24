@@ -173,8 +173,12 @@ export const getMockChartData = async (req: Request, res: Response, next: NextFu
   try {
     const userId = req.user.id;
 
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
     // Get the mock trade details
-    const mockTrade = await mockTradeService.getMockTradeDetails(planId, userId);
+    let mockTrade = await mockTradeService.getMockTradeDetails(planId, userId);
 
     if (!mockTrade) {
       return res.status(404).json({ message: 'Mock trade not found or access denied' });
