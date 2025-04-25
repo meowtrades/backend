@@ -48,11 +48,23 @@ export class MockExecutor {
 
       const resolvedResults = await Promise.all(results);
 
-      // { price: executionAmount , timestamp }
-      return resolvedResults.map((executionAmount, index) => ({
-        price: executionAmount,
-        timestamp: dataPoints[index + 30].timestamp,
-      }));
+      let totalInvestments = amount;
+
+      // // { price: executionAmount , timestamp }
+      // return resolvedResults.map((executionAmount, index) => ({
+      //   price: executionAmount,
+      //   timestamp: dataPoints[index + 30].timestamp,
+      // }));
+
+      // Make a totalInvesmtent till that datapoint, add resolvedResults to each iteration and also add the prev value of totalInvestment
+      return resolvedResults.map((executionAmount, index) => {
+        totalInvestments += executionAmount;
+
+        return {
+          price: totalInvestments,
+          timestamp: dataPoints[index + 30].timestamp,
+        };
+      });
     } catch (error) {
       console.error('Error executing strategy:', error);
       throw error;

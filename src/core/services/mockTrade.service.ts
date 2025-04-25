@@ -1,4 +1,4 @@
-import { MockTrade, IMockTrade } from '../../models/mockTrade.model';
+import { InvestmentPlan, IInvestmentPlan } from '../../models/InvestmentPlan';
 import { logger } from '../../utils/logger';
 import { PluginFactory } from '../strategies/s-dca/chains/factory';
 import { DCAService } from '../strategies/s-dca/index';
@@ -35,9 +35,9 @@ export class MockTradeService {
   }
 
   /**
-   * Create a new mock trade for a user
+   * Create a new investment plan for a user
    */
-  async createMockTrade(userId: string, data: CreateMockTradeInput): Promise<IMockTrade> {
+  async createMockTrade(userId: string, data: CreateMockTradeInput): Promise<IInvestmentPlan> {
     try {
       logger.info(`Creating mock trade for user ${userId}`, data);
 
@@ -47,92 +47,76 @@ export class MockTradeService {
         throw new Error('User not found');
       }
 
-      // Create a new mock trade
-      const mockTrade = new MockTrade({
+      // Create a new investment plan
+      const investmentPlan = new InvestmentPlan({
         userId,
         strategyId: data.strategyId,
         tokenSymbol: data.tokenSymbol.toUpperCase(),
         initialAmount: data.amount,
-        amount: data.amount, // Default to the same amount
-        riskLevel: data.riskLevel || RiskLevel.MEDIUM_RISK, // Default to medium risk
-        frequency: data.frequency || Frequency.DAILY, // Default to daily frequency
-        status: 'active',
-      });
-
-      await mockTrade.save();
-      logger.info(`Created mock trade ${mockTrade._id} for user ${userId}`);
-
-      // Set up a test DCA plan using the mock plugin
-      await this.dcaService.createPlan(userId, {
+        chain: 'mock',
         amount: data.amount,
-        frequency: Frequency.TEST_MINUTE, // Use a test frequency for quick feedback
-        userWalletAddress: userId, // Use userId as wallet address for mock purposes
-        riskLevel: RiskLevel.MEDIUM_RISK, // Default to medium risk
-        chain: 'mock', // Use our mock plugin
+        initialInvestment: data.amount, // Default to the same amount
+        riskLevel: data.riskLevel || RiskLevel.MEDIUM_RISK,
+        frequency: data.frequency || Frequency.DAILY,
+        status: 'active',
+        startDate: new Date(),
       });
 
-      return mockTrade;
+      await investmentPlan.save();
+      logger.info(`Created investment plan ${investmentPlan._id} for user ${userId}`);
+
+      return investmentPlan;
     } catch (error) {
-      logger.error(`Error creating mock trade:`, error);
+      logger.error(`Error creating investment plan:`, error);
       throw error;
     }
   }
 
   /**
-   * Get all active mock trades for a user
+   * Get all active investment plans for a user
    */
-  async getActiveMockTrades(userId: string): Promise<IMockTrade[]> {
+  async getActiveMockTrades(userId: string): Promise<IInvestmentPlan[]> {
     try {
-      return await MockTrade.find({ userId, status: 'active' });
+      return await InvestmentPlan.find({ userId, status: 'active', chain: 'mock' });
     } catch (error) {
-      logger.error(`Error fetching active mock trades:`, error);
+      logger.error(`Error fetching active investment plans:`, error);
       throw error;
     }
   }
 
   /**
-   * Get details of a specific mock trade
+   * Get details of a specific investment plan
    */
-  async getMockTradeDetails(tradeId: string, userId: string): Promise<IMockTrade | null> {
+  async getMockTradeDetails(tradeId: string, userId: string): Promise<IInvestmentPlan | null> {
     try {
-      return await MockTrade.findOne({ _id: tradeId, userId });
+      return await InvestmentPlan.findOne({ _id: tradeId, userId });
     } catch (error) {
-      logger.error(`Error fetching mock trade details:`, error);
+      logger.error(`Error fetching investment plan details:`, error);
       throw error;
     }
   }
 
   /**
-   * Stop an active mock trade
+   * Stop an active investment plan
    */
-  async stopMockTrade(tradeId: string, userId: string): Promise<IMockTrade | null> {
+  async stopMockTrade(tradeId: string, userId: string): Promise<IInvestmentPlan | null> {
     try {
-      // Find and update the trade
-      const mockTrade = await MockTrade.findOneAndUpdate(
+      // Find and update the plan
+      const investmentPlan = await InvestmentPlan.findOneAndUpdate(
         { _id: tradeId, userId, status: 'active' },
         { status: 'stopped', endDate: new Date() },
         { new: true }
       );
 
-      if (mockTrade) {
-        // Also stop the DCA plan
-        const userPlans = await this.dcaService.getUserPlans(userId);
-        for (const plan of userPlans) {
-          if (plan.chain === 'mock') {
-            await this.dcaService.stopPlan(plan._id.toString());
-          }
-        }
-      }
-
-      return mockTrade;
+      return investmentPlan;
     } catch (error) {
-      logger.error(`Error stopping mock trade:`, error);
+      logger.error(`Error stopping investment plan:`, error);
       throw error;
     }
   }
 
   /**
-   * Get current position value for a mock trade
+   * Get current position value for an investment plan
    */
   async getMockTradePosition(
     tradeId: string,
@@ -142,9 +126,9 @@ export class MockTradeService {
     usdValue: number;
   }> {
     try {
-      const mockTrade = await MockTrade.findOne({ _id: tradeId, userId });
-      if (!mockTrade) {
-        throw new Error('Mock trade not found');
+      const investmentPlan = await InvestmentPlan.findOne({ _id: tradeId, userId });
+      if (!investmentPlan) {
+        throw new Error('Investment plan not found');
       }
 
       // Get the mock plugin
@@ -158,7 +142,7 @@ export class MockTradeService {
 
       return { tokenAmount, usdValue };
     } catch (error) {
-      logger.error(`Error getting mock trade position:`, error);
+      logger.error(`Error getting investment plan position:`, error);
       throw error;
     }
   }

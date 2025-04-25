@@ -31,7 +31,6 @@ export const createMockTrade = async (req: Request, res: Response, next: NextFun
 
     const { strategyId, tokenSymbol, amount, riskLevel, frequency } = data;
 
-    // Create the mock trade
     const mockTrade = await mockTradeService.createMockTrade(userId, {
       strategyId,
       tokenSymbol: tokenSymbol.toUpperCase(),
@@ -45,7 +44,7 @@ export const createMockTrade = async (req: Request, res: Response, next: NextFun
       data: mockTrade,
     });
   } catch (error) {
-    next(error); // Pass error to the global error handler
+    next(error);
   }
 };
 
