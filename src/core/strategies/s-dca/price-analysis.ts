@@ -94,6 +94,30 @@ function calculatePriceChangePercentage(prices: PriceData[]): number {
   return percentageChange;
 }
 
+function calculatePriceFactor(priceChangePercentage: number): number {
+  if (priceChangePercentage < 0) {
+    if (priceChangePercentage >= -3) {
+      return randomInRange(0.7, 1.0);
+    } else if (priceChangePercentage >= -10) {
+      return randomInRange(0.4, 0.7);
+    } else {
+      return randomInRange(0.1, 0.3);
+    }
+  } else {
+    if (priceChangePercentage <= 3) {
+      return randomInRange(1.0, 1.3);
+    } else if (priceChangePercentage <= 10) {
+      return randomInRange(1.4, 1.7);
+    } else {
+      return randomInRange(1.7, 1.9);
+    }
+  }
+}
+
+function randomInRange(min: number, max: number): number {
+  return Math.random() * (max - min) + min;
+}
+
 export async function calculatePriceAnalysis(
   priceData: PriceData[],
   tokenId: string
@@ -106,46 +130,48 @@ export async function calculatePriceAnalysis(
   const isPriceGoingUp = priceChangePercentage > 0;
 
   // Use OpenAI to analyze the data and provide a factor between 0-1 or 1-2
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4',
-    messages: [
-      {
-        role: 'system',
-        content: `You are a cryptocurrency price analyzer. Analyze the provided data and return a single number:
-        
-        - If price is dropping (negative price change %), return a number between 0 and 1:
-          * For minimal price drops (0 to -3%), return a number close to 1 (0.7-1.0)
-          * For moderate price drops (-3% to -10%), return a mid-range number (0.4-0.7)
-          * For significant price drops (< -10%), return a number close to 0 (0.1-0.3)
-        
-        - If price is rising (positive price change %), return a number between 1 and 2:
-          * For minimal price increases (0-3%), return a number close to 1 (1.0-1.3)
-          * For moderate price increases (3-10%), return a mid-range number (1.4-1.7)
-          * For significant price increases (>10%), return a number close to 2 (1.7-1.9)
-        
-        Only return the number as a JSON object with a single field called "priceFactor". Nothing else.`,
-      },
-      {
-        role: 'user',
-        content: `
-        Please analyze this token data and provide a price factor:
-        
-        Token: ${tokenId}
-        7-Day Moving Average: $${movingAverage7Day.toFixed(4)}
-        30-Day Moving Average: $${movingAverage30Day.toFixed(4)}
-        24-Hour Price Change: ${priceChangePercentage.toFixed(2)}%
-        `,
-      },
-    ],
-  });
+  // const completion = await openai.chat.completions.create({
+  //   model: 'gpt-4',
+  //   messages: [
+  //     {
+  //       role: 'system',
+  //       content: `You are a cryptocurrency price analyzer. Analyze the provided data and return a single number:
 
-  // Parse the JSON response
-  if (!completion.choices[0].message.content) {
-    throw new Error('OpenAI response content is null');
-  }
+  //       - If price is dropping (negative price change %), return a number between 0 and 1:
+  //         * For minimal price drops (0 to -3%), return a number close to 1 (0.7-1.0)
+  //         * For moderate price drops (-3% to -10%), return a mid-range number (0.4-0.7)
+  //         * For significant price drops (< -10%), return a number close to 0 (0.1-0.3)
 
-  const analysis = JSON.parse(completion.choices[0].message.content);
-  const priceFactor = analysis.priceFactor;
+  //       - If price is rising (positive price change %), return a number between 1 and 2:
+  //         * For minimal price increases (0-3%), return a number close to 1 (1.0-1.3)
+  //         * For moderate price increases (3-10%), return a mid-range number (1.4-1.7)
+  //         * For significant price increases (>10%), return a number close to 2 (1.7-1.9)
+
+  //       Only return the number as a JSON object with a single field called "priceFactor". Nothing else.`,
+  //     },
+  //     {
+  //       role: 'user',
+  //       content: `
+  //       Please analyze this token data and provide a price factor:
+
+  //       Token: ${tokenId}
+  //       7-Day Moving Average: $${movingAverage7Day.toFixed(4)}
+  //       30-Day Moving Average: $${movingAverage30Day.toFixed(4)}
+  //       24-Hour Price Change: ${priceChangePercentage.toFixed(2)}%
+  //       `,
+  //     },
+  //   ],
+  // });
+
+  // // Parse the JSON response
+  // if (!completion.choices[0].message.content) {
+  //   throw new Error('OpenAI response content is null');
+  // }
+
+  // const analysis = JSON.parse(completion.choices[0].message.content);
+  // const priceFactor = analysis.priceFactor;
+  const priceFactor = calculatePriceFactor(priceChangePercentage);
+
   logger.info(
     `AI analysis for ${tokenId}: Price factor = ${priceFactor}, Price trend: ${
       isPriceGoingUp ? 'Up' : 'Down'

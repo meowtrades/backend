@@ -214,6 +214,9 @@ export class MockTradeService {
     // Start from days ago
     const startTIme = new Date(Date.now() - 1000 * 60 * 60 * 24 * days);
     const endTime = new Date(Date.now());
+
+    console.log(startTIme, endTime);
+
     const interval = frequencyToInterval(frequency as Frequency);
 
     const fetcher = new DataFetcher(new PythProvider(), tokenSymbol, startTIme, endTime, interval);
