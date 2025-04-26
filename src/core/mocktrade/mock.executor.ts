@@ -50,12 +50,6 @@ export class MockExecutor {
 
       let totalInvestments = amount;
 
-      // // { price: executionAmount , timestamp }
-      // return resolvedResults.map((executionAmount, index) => ({
-      //   price: executionAmount,
-      //   timestamp: dataPoints[index + 30].timestamp,
-      // }));
-
       // Make a totalInvesmtent till that datapoint, add resolvedResults to each iteration and also add the prev value of totalInvestment
       return resolvedResults.map((executionAmount, index) => {
         totalInvestments += executionAmount;

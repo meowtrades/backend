@@ -163,12 +163,6 @@ export const getMockChartData = async (req: Request, res: Response, next: NextFu
     return res.status(400).json({ message: 'Invalid plan ID' });
   }
 
-  // // Validate the range query parameter
-  // const validRanges = Object.values(Range);
-  // if (range && !validRanges.includes(range as Range)) {
-  //   return res.status(400).json({ message: 'Invalid range value' });
-  // }
-
   try {
     const userId = req.user.id;
 
