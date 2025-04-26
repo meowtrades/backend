@@ -76,18 +76,13 @@ function calculatePriceChangePercentage(prices: PriceData[]): number {
   const targetTimestamp = latestPrice.timestamp - oneDayMs;
 
   // Find the price data point closest to 24 hours ago
-  let closestPricePoint = sortedPrices[0];
-  let smallestDiff = Math.abs(sortedPrices[0].timestamp - targetTimestamp);
+  const closestPricePoint = sortedPrices.reduce((prev, curr) => {
+    return Math.abs(curr.timestamp - targetTimestamp) < Math.abs(prev.timestamp - targetTimestamp)
+      ? curr
+      : prev;
+  });
 
-  for (let i = 1; i < sortedPrices.length; i++) {
-    const diff = Math.abs(sortedPrices[i].timestamp - targetTimestamp);
-    if (diff < smallestDiff) {
-      smallestDiff = diff;
-      closestPricePoint = sortedPrices[i];
-    }
-  }
-
-  // Calculate percentage change using true 24-hour window
+  // Calculate percentage change using the closest price point
   const percentageChange =
     ((latestPrice.price - closestPricePoint.price) / closestPricePoint.price) * 100;
 
@@ -172,11 +167,11 @@ export async function calculatePriceAnalysis(
   // const priceFactor = analysis.priceFactor;
   const priceFactor = calculatePriceFactor(priceChangePercentage);
 
-  logger.info(
-    `AI analysis for ${tokenId}: Price factor = ${priceFactor}, Price trend: ${
-      isPriceGoingUp ? 'Up' : 'Down'
-    }`
-  );
+  // logger.info(
+  //   `AI analysis for ${tokenId}: Price factor = ${priceFactor}, Price trend: ${
+  //     isPriceGoingUp ? 'Up' : 'Down'
+  //   }`
+  // );
 
   return {
     movingAverage7Day,
