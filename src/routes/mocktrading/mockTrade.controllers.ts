@@ -1,3 +1,4 @@
+import { rangeToDays } from './../../utils/convertors';
 import { CreateMockTradeInput } from './../../core/mocktrade/service';
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
@@ -165,8 +166,8 @@ export const getMockChartData = async (req: Request, res: Response, next: NextFu
   }
 
   // Restrict allowed ranges
-  const allowedRanges = ['7D', '1M', '3M'];
-  if (!allowedRanges.includes(range)) {
+  const allowedRanges = ['7D', '30D', '90D'];
+  if (!allowedRanges.includes(range.toUpperCase())) {
     return res
       .status(400)
       .json({ message: `Invalid range. Allowed ranges are: ${allowedRanges.join(', ')}` });
@@ -189,8 +190,10 @@ export const getMockChartData = async (req: Request, res: Response, next: NextFu
       return res.status(404).json({ message: 'Mock data not available for this plan' });
     }
 
-    // Filter mock data based on the requested range
-    const rangeDays = range === '7D' ? 7 : range === '1M' ? 30 : 90;
+    // Determine the number of days to slice based on the range
+    const rangeDays = rangeToDays(range);
+
+    // Slice the mock data to include only the last `rangeDays` entries
     const filteredData = investmentPlan.mockData.slice(-rangeDays);
 
     res.status(200).json({

@@ -4,19 +4,16 @@ import { logger } from './logger';
 
 const mockTradeService = new MockTradeService();
 
-// Mutex to prevent overlapping jobs
-let isJobRunning = false;
-
 /**
  * Schedule a daily job to update mock data for all active plans
  */
 export const scheduleDailyMockDataUpdate = () => {
   logger.info('Scheduling daily mock data update...');
 
-  cron.schedule('* * * * * *', async () => {
-    // Adjusted to run every minute for testing
+  // Run the cron job daily at midnight
+  cron.schedule('0 0 * * *', async () => {
     if (isJobRunning) {
-      // logger.warn('Cron job skipped: A previous instance is still running.');
+      logger.warn('Cron job skipped: A previous instance is still running.');
       return;
     }
 

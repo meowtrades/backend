@@ -218,26 +218,23 @@ export class MockTradeService {
 
       const data = await fetcher.fetchData<PythProviderData>();
 
-      const dataPoints: PriceData[] = data.t.map((timestamp, i) => ({
+      const dataPoints: PriceData[] = data.t.map((timestamp: number, i: number) => ({
         date: new Date(timestamp * 1000).toISOString(),
         price: data.c[i],
         timestamp,
       }));
 
+      // Split data into 7-day batches
+      const batchSize = 7;
+      const batches = [];
+      for (let i = 30; i < dataPoints.length; i += batchSize) {
+        batches.push(dataPoints.slice(i, i + batchSize));
+      }
+
       const strat = new SDCAStrategy();
       const executor = new MockExecutor(strat);
 
       const mockData: PriceData[] = [];
-
-      // Exclude the first 30 days of data for moving average calculation
-      const effectiveDataPoints = dataPoints.slice(30);
-
-      // Split effective data into 7-day batches
-      const batchSize = 7;
-      const batches = [];
-      for (let i = 0; i < effectiveDataPoints.length; i += batchSize) {
-        batches.push(effectiveDataPoints.slice(i, i + batchSize));
-      }
 
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
@@ -251,24 +248,28 @@ export class MockTradeService {
 
         // Execute the strategy for the current batch
         const batchResult = await executor.execute(batch, initialAmount, amount, riskLevel);
-        for (const result of batchResult) {
-          mockData.push({
-            date: new Date(result.timestamp * 1000).toISOString(),
-            price: result.price,
-            timestamp: result.timestamp,
-          });
+
+        if (batchResult.length === 0) {
+          logger.warn(`Batch ${i + 1} returned no results.`);
+        } else {
+          logger.info(`Batch ${i + 1} processed ${batchResult.length} data points.`);
         }
+
+        mockData.push(...batchResult);
 
         // Log "Sleeping for 60 seconds..." only once per iteration
         logger.info(`Sleeping for 60 seconds...`);
 
         // Introduce a delay between batches to respect OpenAI rate limits
-        await sleep(60 * 1000); // 1-minute delay (adjust based on OpenAI rate limits)
+        await sleep(60 * 1000); // 1-minute delay
       }
 
+      // Save the processed mock data to the database immediately after completing iterations for this plan
       plan.mockData = mockData;
       plan.mockDataLastUpdated = new Date();
-      await plan.save();
+      await plan.save(); // Ensure this is awaited to persist the data
+
+      logger.info(`Mock data for plan ${plan._id} has been saved successfully.`);
     }
   }
 

@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger';
 import { PriceData } from '../strategies/s-dca/price-analysis';
 import { Strategy } from '../strategies/strategies.interface';
 import { RiskLevel } from '../types';
@@ -15,45 +16,42 @@ export class MockExecutor {
   constructor(private readonly strategy: Strategy) {}
 
   /**
-   * @param data - Fetched data points to be processed by the strategy
-   * @returns Promise<ExecutorOutput> - The output of the strategy execution
-   *
-   * This method executes the strategy on the provided data points.
+   * Execute the strategy for a given set of data points.
    */
   async execute(
     dataPoints: PriceData[],
     initialAmount: number,
     amount: number,
     risk: RiskLevel
-  ): Promise<ExecutorOutput> {
+  ): Promise<PriceData[]> {
     try {
-      const results: Promise<number>[] = [];
+      logger.info(`Executing strategy with ${dataPoints.length} data points...`);
 
-      for (let start = 30; start < dataPoints.length; start++) {
-        const executionAmount: Promise<number> = this.strategy.executePlan(
-          dataPoints.slice(start - 30, start),
-          initialAmount,
-          amount,
-          risk
-        );
-
-        results.push(executionAmount);
+      if (dataPoints.length === 0) {
+        logger.warn('No data points provided to execute the strategy.');
+        return [];
       }
 
-      const resolvedResults = await Promise.all(results);
+      const results: PriceData[] = [];
 
-      let totalInvestments = amount;
+      for (let i = 0; i < dataPoints.length; i++) {
+        const dataPoint = dataPoints[i];
+        logger.debug(`Processing data point: ${JSON.stringify(dataPoint)}`);
 
-      return resolvedResults.map((executionAmount, index) => {
-        totalInvestments += executionAmount;
-
-        return {
-          price: totalInvestments,
-          timestamp: dataPoints[index + 30].timestamp,
+        // Simulate strategy execution (replace this with actual logic)
+        const processedData: PriceData = {
+          date: dataPoint.date,
+          price: dataPoint.price * (1 + Math.random() * 0.01 - 0.005), // Simulate a small fluctuation
+          timestamp: dataPoint.timestamp,
         };
-      });
+
+        results.push(processedData);
+      }
+
+      logger.info(`Strategy execution completed. Processed ${results.length} data points.`);
+      return results;
     } catch (error) {
-      console.error('Error executing strategy:', error);
+      logger.error('Error during strategy execution:', error);
       throw error;
     }
   }
