@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { RiskLevel, Frequency } from '../core/types';
 
-const InvestmentPlanSchema: Schema = new Schema(
+const InvestmentPlanSchema = new Schema(
   {
     userId: { type: String, required: true },
     amount: { type: Number, required: true },
@@ -34,6 +34,13 @@ const InvestmentPlanSchema: Schema = new Schema(
       default: 'active',
       required: true,
     }, // Added from MockTrade schema
+    mockData: {
+      type: Array, // Store the mock chart data
+      default: [],
+    },
+    mockDataLastUpdated: {
+      type: Date, // Timestamp of the last update
+    },
   },
   {
     timestamps: true,
@@ -61,6 +68,8 @@ export interface IInvestmentPlan extends Document {
   startDate: Date;
   endDate?: Date;
   status: 'active' | 'stopped';
+  mockData: any[]; // Define a proper type later based on price data structure
+  mockDataLastUpdated: Date;
 }
 
 export const InvestmentPlan = mongoose.model<IInvestmentPlan>(

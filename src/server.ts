@@ -10,6 +10,7 @@ import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth';
 import cors from 'cors'; // Import the CORS middleware
 import { FRONTEND_URLS } from './constants/configs';
+import { scheduleDailyMockDataUpdate } from './utils/scheduler';
 
 dotenv.config();
 
@@ -43,6 +44,9 @@ logger.info('Plugins initialized successfully');
 // Initialize transaction recovery service
 TransactionRecoveryService.getInstance();
 logger.info('Transaction recovery service initialized');
+
+// Start the daily mock data update scheduler
+scheduleDailyMockDataUpdate();
 
 mongoose
   .connect(MONGODB_URI)

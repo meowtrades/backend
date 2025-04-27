@@ -48,7 +48,7 @@ export class DataFetcher {
         this.chainId
       );
 
-      console.log(data);
+      // console.log(data);
       if (data.s === 'error') {
         throw new Error('Error fetching data from provider');
       }

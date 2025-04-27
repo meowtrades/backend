@@ -5,6 +5,7 @@ import { MockTradeService } from '../../core/services/mockTrade.service';
 // import { z } from 'better-auth/*';
 import { Frequency, Range, RiskLevel } from '../../core/types';
 import { z } from 'zod';
+import { InvestmentPlan } from '../../models/InvestmentPlan';
 // CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
@@ -163,6 +164,14 @@ export const getMockChartData = async (req: Request, res: Response, next: NextFu
     return res.status(400).json({ message: 'Invalid plan ID' });
   }
 
+  // Restrict allowed ranges
+  const allowedRanges = ['7D', '1M', '3M'];
+  if (!allowedRanges.includes(range)) {
+    return res
+      .status(400)
+      .json({ message: `Invalid range. Allowed ranges are: ${allowedRanges.join(', ')}` });
+  }
+
   try {
     const userId = req.user.id;
 
@@ -170,26 +179,23 @@ export const getMockChartData = async (req: Request, res: Response, next: NextFu
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // Get the mock trade details
-    let mockTrade = await mockTradeService.getMockTradeDetails(planId, userId);
+    const investmentPlan = await InvestmentPlan.findOne({ _id: planId, userId });
 
-    if (!mockTrade) {
-      return res.status(404).json({ message: 'Mock trade not found or access denied' });
+    if (!investmentPlan) {
+      return res.status(404).json({ message: 'Investment plan not found or access denied' });
     }
 
-    // Get the chart data
-    const chartData = await mockTradeService.getMockChartData(
-      mockTrade.tokenSymbol,
-      range,
-      mockTrade.frequency,
-      mockTrade.initialAmount,
-      mockTrade.amount,
-      mockTrade.riskLevel
-    );
+    if (!investmentPlan.mockData || investmentPlan.mockData.length === 0) {
+      return res.status(404).json({ message: 'Mock data not available for this plan' });
+    }
+
+    // Filter mock data based on the requested range
+    const rangeDays = range === '7D' ? 7 : range === '1M' ? 30 : 90;
+    const filteredData = investmentPlan.mockData.slice(-rangeDays);
 
     res.status(200).json({
       message: 'Mock chart data fetched successfully',
-      data: chartData,
+      data: filteredData,
     });
   } catch (error) {
     next(error);

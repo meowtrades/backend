@@ -18,6 +18,7 @@ import { SDCAStrategy } from '../mocktrade/strategies/s-dca.strategy';
 import { MockExecutor } from '../mocktrade/mock.executor';
 import { ParsedQs } from 'qs';
 import { frequencyToInterval, rangeToDays } from '../../utils/convertors';
+import { sleep } from '../../utils/sleep';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -191,15 +192,88 @@ export class MockTradeService {
   }
 
   /**
-   *
-   * @param tokenSymbol
-   * @param range
-   * @param interval
-   * @returns
-   *
-   * Initializes a DataFetcher instance with the specified token symbol, range, and interval.
-   * Fetches data from the PythProvider and processes it into an array of PriceData objects.
-   * The data is then returned as an array of PriceData objects.
+   * Update mock data for all active plans
+   */
+  async updateMockDataForActivePlans(): Promise<void> {
+    const activePlans = await InvestmentPlan.find({ status: 'active', chain: 'mock' });
+
+    for (const plan of activePlans) {
+      logger.info(`Updating mock data for plan ${plan._id}`);
+      const { tokenSymbol, initialAmount, amount, riskLevel } = plan;
+
+      // Hardcoded interval and range
+      const interval = '1D';
+      const range = 90; // 90 days
+
+      const startTime = new Date(Date.now() - 1000 * 60 * 60 * 24 * range);
+      const endTime = new Date();
+
+      const fetcher = new DataFetcher(
+        new PythProvider(),
+        tokenSymbol,
+        startTime,
+        endTime,
+        interval
+      );
+
+      const data = await fetcher.fetchData<PythProviderData>();
+
+      const dataPoints: PriceData[] = data.t.map((timestamp, i) => ({
+        date: new Date(timestamp * 1000).toISOString(),
+        price: data.c[i],
+        timestamp,
+      }));
+
+      const strat = new SDCAStrategy();
+      const executor = new MockExecutor(strat);
+
+      const mockData: PriceData[] = [];
+
+      // Exclude the first 30 days of data for moving average calculation
+      const effectiveDataPoints = dataPoints.slice(30);
+
+      // Split effective data into 7-day batches
+      const batchSize = 7;
+      const batches = [];
+      for (let i = 0; i < effectiveDataPoints.length; i += batchSize) {
+        batches.push(effectiveDataPoints.slice(i, i + batchSize));
+      }
+
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        const remainingIterations = batches.length - i;
+
+        logger.info(
+          `Processing batch ${i + 1}/${batches.length} for plan ${
+            plan._id
+          }. Remaining iterations: ${remainingIterations}`
+        );
+
+        // Execute the strategy for the current batch
+        const batchResult = await executor.execute(batch, initialAmount, amount, riskLevel);
+        for (const result of batchResult) {
+          mockData.push({
+            date: new Date(result.timestamp * 1000).toISOString(),
+            price: result.price,
+            timestamp: result.timestamp,
+          });
+        }
+
+        // Log "Sleeping for 60 seconds..." only once per iteration
+        logger.info(`Sleeping for 60 seconds...`);
+
+        // Introduce a delay between batches to respect OpenAI rate limits
+        await sleep(60 * 1000); // 1-minute delay (adjust based on OpenAI rate limits)
+      }
+
+      plan.mockData = mockData;
+      plan.mockDataLastUpdated = new Date();
+      await plan.save();
+    }
+  }
+
+  /**
+   * Get mock chart data for a specific plan
    */
   async getMockChartData(
     tokenSymbol: string,
@@ -207,36 +281,48 @@ export class MockTradeService {
     frequency: Frequency | string,
     initialAmount: number,
     amount: number,
-    risk: RiskLevel
+    risk: RiskLevel,
+    planId: string
   ) {
+    const plan = await InvestmentPlan.findById(planId);
+
+    if (!plan) {
+      throw new Error('Investment plan not found');
+    }
+
+    // Serve stored data if it is up-to-date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of the day
+    if (plan.mockDataLastUpdated && plan.mockDataLastUpdated >= today) {
+      return plan.mockData;
+    }
+
+    // Otherwise, recalculate and update
     const days = isNaN(Number(range)) ? rangeToDays(range as Range) : Number(range);
-
-    // Start from days ago
-    const startTIme = new Date(Date.now() - 1000 * 60 * 60 * 24 * days);
-    const endTime = new Date(Date.now());
-
-    console.log(startTIme, endTime);
+    const startTime = new Date(Date.now() - 1000 * 60 * 60 * 24 * days);
+    const endTime = new Date();
 
     const interval = frequencyToInterval(frequency as Frequency);
 
-    const fetcher = new DataFetcher(new PythProvider(), tokenSymbol, startTIme, endTime, interval);
+    const fetcher = new DataFetcher(new PythProvider(), tokenSymbol, startTime, endTime, interval);
 
     const data = await fetcher.fetchData<PythProviderData>();
 
-    const dataPoints: PriceData[] = [];
-
-    for (let i = 0; i < data.t.length; i++) {
-      const dataPoint: PriceData = {
-        date: new Date(data.t[i] * 1000).toISOString(),
-        price: data.c[i],
-        timestamp: data.t[i],
-      };
-      dataPoints.push(dataPoint);
-    }
+    const dataPoints: PriceData[] = data.t.map((timestamp, i) => ({
+      date: new Date(timestamp * 1000).toISOString(),
+      price: data.c[i],
+      timestamp,
+    }));
 
     const strat = new SDCAStrategy();
     const executor = new MockExecutor(strat);
 
-    return await executor.execute(dataPoints, initialAmount, amount, risk);
+    const mockData = await executor.execute(dataPoints, initialAmount, amount, risk);
+
+    plan.mockData = mockData;
+    plan.mockDataLastUpdated = new Date();
+    await plan.save();
+
+    return mockData;
   }
 }

@@ -19,9 +19,6 @@ export class MockExecutor {
    * @returns Promise<ExecutorOutput> - The output of the strategy execution
    *
    * This method executes the strategy on the provided data points.
-   * It processes each data point using the strategy's executePlan method.
-   * The strategy's executePlan method is expected to return a StrategyOutput.
-   * The output can be used for further processing or logging.
    */
   async execute(
     dataPoints: PriceData[],
@@ -33,7 +30,6 @@ export class MockExecutor {
       const results: Promise<number>[] = [];
 
       for (let start = 30; start < dataPoints.length; start++) {
-        // const dataPoint = dataPoints[start];
         const executionAmount: Promise<number> = this.strategy.executePlan(
           dataPoints.slice(start - 30, start),
           initialAmount,
@@ -41,8 +37,6 @@ export class MockExecutor {
           risk
         );
 
-        // Calculate the investment amount based on the execution amount
-        // initialAmount += executionAmount;
         results.push(executionAmount);
       }
 
@@ -50,7 +44,6 @@ export class MockExecutor {
 
       let totalInvestments = amount;
 
-      // Make a totalInvesmtent till that datapoint, add resolvedResults to each iteration and also add the prev value of totalInvestment
       return resolvedResults.map((executionAmount, index) => {
         totalInvestments += executionAmount;
 
