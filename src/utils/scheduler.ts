@@ -4,6 +4,8 @@ import { logger } from './logger';
 
 const mockTradeService = new MockTradeService();
 
+let isJobRunning = false; // Flag to prevent concurrent executions
+
 /**
  * Schedule a daily job to update mock data for all active plans
  */
