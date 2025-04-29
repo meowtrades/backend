@@ -138,27 +138,35 @@ export const fetchMockData = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export async function checkMockData(req: Request, res: Response, next: NextFunction) {
+// export async function checkMockData(req: Request, res: Response, next: NextFunction) {
+//   try {
+//     const data = await mockTradeService.checkMockData();
+
+//     return res.status(200).json({
+//       message: 'Mock data checked successfully',
+//       data,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({
+//       message: 'Error checking mock data',
+//       error,
+//     });
+//   }
+// }
+
+export const getChartDataForMockTrade = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await mockTradeService.checkMockData();
+    const { mockId } = req.params;
 
-    return res.status(200).json({
-      message: 'Mock data checked successfully',
-      data,
-    });
+    const result = await mockTradeService.handleChartRequest(mockId);
+
+    if (result.data) {
+      return res.status(200).json({ data: result.data });
+    } else {
+      return res.status(202).json({ message: result.message });
+    }
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      message: 'Error checking mock data',
-      error,
-    });
+    next(error);
   }
-}
-
-export const getMockChartData = async (req: Request, res: Response, next: NextFunction) => {
-  const data = await mockTradeService.createChartData();
-  return res.status(200).json({
-    message: 'Mock chart data fetched successfully',
-    data,
-  });
 };

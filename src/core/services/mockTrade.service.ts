@@ -18,6 +18,7 @@ import { SDCAStrategy } from '../mocktrade/strategies/s-dca.strategy';
 import { MockExecutor } from '../mocktrade/mock.executor';
 import { ParsedQs } from 'qs';
 import { frequencyToInterval, rangeToDays } from '../../utils/convertors';
+import { MockDataBatch } from '../../models/MockDataBatch';
 import { OpenAIBatchProcessor } from '../mocktrade/openai.batch.processor';
 import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
@@ -152,11 +153,9 @@ export class MockTradeService {
 
   async fetchMockData() {
     const fetcher = new DataFetcher(
-      // new CoinGeckoDataProvider(),
       new PythProvider(),
       'Crypto.USDT/USD',
-      // new Date(Date.now() - 1000 * 60 * 60 * 24 * 30 * 7), // 30 days
-      new Date(Date.now() - 1000 * 60 * 60 * 24 * 90), // 7 days agi
+      new Date(Date.now() - 1000 * 60 * 60 * 24 * 90), // 90 days agi
       new Date(Date.now()),
       'D' as PythProviderInterval
     );
@@ -165,46 +164,77 @@ export class MockTradeService {
     return data;
   }
 
-  async checkMockData() {
-    const data = await this.fetchMockData();
+  async handleChartRequest(mockId: string) {
+    // Check if data exists in DB
+    const existingBatch = await MockDataBatch.findOne({ mockId });
 
-    const dataPoints = [];
+    if (!existingBatch) {
+      // No batch exists, create a new batch
+      const newBatch = await this.createChartData();
+      const mockDataBatch = new MockDataBatch({
+        mockId,
+        batchId: newBatch.id,
+      });
+      await mockDataBatch.save();
 
-    for (let i = 0; i < data.t.length; i++) {
-      const dataPoint: PriceData = {
-        date: new Date(data.t[i] * 1000).toISOString(),
-        price: data.c[i],
-        timestamp: data.t[i],
-      };
-      dataPoints.push(dataPoint);
+      return { message: 'Processing, come back later' };
     }
 
-    const strat = new SDCAStrategy();
+    // Check OpenAI batch status
+    const batchProcessor = new OpenAIBatchProcessor(new SDCAStrategyAdapter());
+    const batchStatus = await batchProcessor.getBatchMetadata(existingBatch.batchId);
 
-    const initialAmount = 1000;
-    const amount = 1000;
+    if (batchStatus.status === 'completed') {
+      // Fetch results and store in DB
+      const results = await batchProcessor.getBatchResult(existingBatch.batchId);
+      existingBatch.data = results;
+      await existingBatch.save();
 
-    const executor = new MockExecutor(strat);
-
-    // const executor = new MockExecutor(strat);
-
-    // const result = await executor.executePlan(dataPoints);
-
-    return await executor.execute(dataPoints, initialAmount, amount, RiskLevel.MEDIUM_RISK);
+      return { data: results };
+    } else {
+      // Batch is still processing
+      return { message: 'Processing, come back later' };
+    }
   }
 
   async createChartData() {
     const strategy = new SDCAStrategyAdapter();
-
     const batchProcessor = new OpenAIBatchProcessor(strategy);
 
     const data = await this.fetchMockData();
-
     const dataPoints = new PythTransformer().transform(data);
 
-    const batch = await batchProcessor.process(dataPoints);
+    return await batchProcessor.process(dataPoints);
+  }
 
-    return batch;
+  async getChartData(mockId: string) {
+    const batch = await MockDataBatch.findOne({ mockId });
+
+    if (!batch) {
+      throw new Error('Batch not found');
+    }
+
+    return batch.data;
+  }
+
+  async getOrCreateChartData(mockPlanId: string) {
+    const batch = await MockDataBatch.findOne({ mockId: mockPlanId });
+
+    if (batch) {
+      return batch;
+    }
+
+    const newBatch = await this.createChartData();
+
+    const mockDataBatch = new MockDataBatch({
+      mockId: mockPlanId,
+      batchId: newBatch.id,
+    });
+
+    await mockDataBatch.save();
+    logger.info(`Created new batch ${mockDataBatch.batchId} for mock plan ${mockPlanId}`);
+
+    return mockDataBatch;
   }
 
   async getChartStatus(fileId: string) {
