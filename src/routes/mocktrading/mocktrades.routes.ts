@@ -4,7 +4,7 @@ import { getSession } from '../../middleware/auth';
 
 const router = Router();
 
-router.use(getSession);
+// router.use(getSession);
 
 // Route to create a new mock trade
 router.post('/', mockTradeController.createMockTrade);

@@ -18,6 +18,9 @@ import { SDCAStrategy } from '../mocktrade/strategies/s-dca.strategy';
 import { MockExecutor } from '../mocktrade/mock.executor';
 import { ParsedQs } from 'qs';
 import { frequencyToInterval, rangeToDays } from '../../utils/convertors';
+import { OpenAIBatchProcessor } from '../mocktrade/openai.batch.processor';
+import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
+import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -190,53 +193,25 @@ export class MockTradeService {
     return await executor.execute(dataPoints, initialAmount, amount, RiskLevel.MEDIUM_RISK);
   }
 
-  /**
-   *
-   * @param tokenSymbol
-   * @param range
-   * @param interval
-   * @returns
-   *
-   * Initializes a DataFetcher instance with the specified token symbol, range, and interval.
-   * Fetches data from the PythProvider and processes it into an array of PriceData objects.
-   * The data is then returned as an array of PriceData objects.
-   */
-  async getMockChartData(
-    tokenSymbol: string,
-    range: string | Range,
-    frequency: Frequency | string,
-    initialAmount: number,
-    amount: number,
-    risk: RiskLevel
-  ) {
-    const days = isNaN(Number(range)) ? rangeToDays(range as Range) : Number(range);
+  async createChartData() {
+    const strategy = new SDCAStrategyAdapter();
 
-    // Start from days ago
-    const startTIme = new Date(Date.now() - 1000 * 60 * 60 * 24 * days);
-    const endTime = new Date(Date.now());
+    const batchProcessor = new OpenAIBatchProcessor(strategy);
 
-    console.log(startTIme, endTime);
+    const data = await this.fetchMockData();
 
-    const interval = frequencyToInterval(frequency as Frequency);
+    const dataPoints = new PythTransformer().transform(data);
 
-    const fetcher = new DataFetcher(new PythProvider(), tokenSymbol, startTIme, endTime, interval);
+    const batch = await batchProcessor.process(dataPoints);
 
-    const data = await fetcher.fetchData<PythProviderData>();
+    return batch;
+  }
 
-    const dataPoints: PriceData[] = [];
+  async getChartStatus(fileId: string) {
+    const strategy = new SDCAStrategyAdapter();
 
-    for (let i = 0; i < data.t.length; i++) {
-      const dataPoint: PriceData = {
-        date: new Date(data.t[i] * 1000).toISOString(),
-        price: data.c[i],
-        timestamp: data.t[i],
-      };
-      dataPoints.push(dataPoint);
-    }
+    const batchProcessor = new OpenAIBatchProcessor(strategy);
 
-    const strat = new SDCAStrategy();
-    const executor = new MockExecutor(strat);
-
-    return await executor.execute(dataPoints, initialAmount, amount, risk);
+    return await batchProcessor.getBatchMetadata(fileId);
   }
 }

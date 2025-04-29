@@ -28,7 +28,7 @@ export class OpenAIBatchProcessor {
    * @param dataPoints - An array of PriceData points to be converted.
    * @returns The path to the created batch file.
    */
-  private writeBatchToFile(dataPoints: PriceData[]): string {
+  private async writeBatchToFile(dataPoints: PriceData[]): Promise<string> {
     const data = this.strategy.execute(dataPoints);
     const fileName = `batch-${Date.now()}.jsonl`;
     const filePath = `./batch/${fileName}`;
@@ -90,8 +90,8 @@ export class OpenAIBatchProcessor {
    * @param dataPoints - The PriceData points to be processed.
    * @returns A promise that resolves to the created batch object.
    */
-  public async process(dataPoints: PriceData) {
-    const filePath = this.writeBatchToFile([dataPoints]);
+  public async process(dataPoints: PriceData[]) {
+    const filePath = await this.writeBatchToFile(dataPoints);
     const file = await this.createBatchFile(filePath);
     const batch = await this.uploadBatch(file);
 

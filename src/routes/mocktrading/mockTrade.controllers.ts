@@ -156,42 +156,5 @@ export async function checkMockData(req: Request, res: Response, next: NextFunct
 }
 
 export const getMockChartData = async (req: Request, res: Response, next: NextFunction) => {
-  const planId = req.params.id;
-  const range = req.query.range as string;
-
-  if (!mongoose.Types.ObjectId.isValid(planId)) {
-    return res.status(400).json({ message: 'Invalid plan ID' });
-  }
-
-  try {
-    const userId = req.user.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    // Get the mock trade details
-    let mockTrade = await mockTradeService.getMockTradeDetails(planId, userId);
-
-    if (!mockTrade) {
-      return res.status(404).json({ message: 'Mock trade not found or access denied' });
-    }
-
-    // Get the chart data
-    const chartData = await mockTradeService.getMockChartData(
-      mockTrade.tokenSymbol,
-      range,
-      mockTrade.frequency,
-      mockTrade.initialAmount,
-      mockTrade.amount,
-      mockTrade.riskLevel
-    );
-
-    res.status(200).json({
-      message: 'Mock chart data fetched successfully',
-      data: chartData,
-    });
-  } catch (error) {
-    next(error);
-  }
+  const data = await mockTradeService.createChartData();
 };
