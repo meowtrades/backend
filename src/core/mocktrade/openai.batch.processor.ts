@@ -3,6 +3,7 @@ import { StrategyAdapter } from './strategies/strategy.adapter';
 import { PriceData } from '../strategies/s-dca/price-analysis';
 import fs from 'fs';
 import { APIPromise } from 'openai/core';
+import { logger } from '../../utils/logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -24,6 +25,22 @@ export class OpenAIBatchProcessor {
   constructor(private readonly strategy: StrategyAdapter) {}
 
   /**
+   * Processes the provided data points by writing them to a file, creating a batch file,
+   * and uploading it to OpenAI.
+   * @param dataPoints - The PriceData points to be processed.
+   * @returns A promise that resolves to the created batch object.
+   */
+  public async process(dataPoints: PriceData[]) {
+    const filePath = await this.writeBatchToFile(dataPoints);
+    const file = await this.createBatchFile(filePath);
+    logger.info(`File created: ${file.id}`);
+    const batch = await this.uploadBatch(file);
+    logger.info(`Batch created: ${batch.id}`);
+
+    return batch;
+  }
+
+  /**
    * Converts data points to batch data and writes them to a file.
    * @param dataPoints - An array of PriceData points to be converted.
    * @returns The path to the created batch file.
@@ -33,25 +50,45 @@ export class OpenAIBatchProcessor {
     const fileName = `batch-${Date.now()}.jsonl`;
     const filePath = `./batch/${fileName}`;
 
-    const fileStream = fs.createWriteStream(filePath, { flags: 'a' });
+    // Ensure the directory exists
+    await fs.promises.mkdir('./batch', { recursive: true });
 
-    data.forEach(batchInput => {
-      const jsonLine = JSON.stringify(batchInput) + '\n';
-      fileStream.write(jsonLine);
+    return new Promise((resolve, reject) => {
+      const fileStream = fs.createWriteStream(filePath, { flags: 'a' });
+
+      fileStream.on('error', err => {
+        logger.error('Error writing to file:', err);
+        reject(err);
+      });
+
+      fileStream.on('finish', () => {
+        logger.info(`File write completed: ${filePath}`);
+        resolve(filePath);
+      });
+
+      const writeData = (index: number) => {
+        if (index >= data.length) {
+          fileStream.end();
+          return;
+        }
+
+        const jsonLine = JSON.stringify(data[index]) + '\n';
+        const canWrite = fileStream.write(jsonLine, err => {
+          if (err) {
+            console.error('Error during write:', err);
+            reject(err);
+          }
+        });
+
+        if (!canWrite) {
+          fileStream.once('drain', () => writeData(index + 1));
+        } else {
+          writeData(index + 1);
+        }
+      };
+
+      writeData(0);
     });
-
-    fileStream.on('error', err => {
-      console.error('Error writing to file:', err);
-    });
-
-    fileStream.on('finish', () => {
-      console.log('File write completed.');
-    });
-
-    fileStream.end();
-    console.log(`Batch data written to ${filePath}`);
-
-    return filePath;
   }
 
   /**
@@ -64,6 +101,10 @@ export class OpenAIBatchProcessor {
     const file = openai.files.create({
       file: fileStream,
       purpose: 'batch',
+    });
+
+    fileStream.on('error', err => {
+      logger.error('Error reading file:', err);
     });
 
     return file;
@@ -85,20 +126,6 @@ export class OpenAIBatchProcessor {
   }
 
   /**
-   * Processes the provided data points by writing them to a file, creating a batch file,
-   * and uploading it to OpenAI.
-   * @param dataPoints - The PriceData points to be processed.
-   * @returns A promise that resolves to the created batch object.
-   */
-  public async process(dataPoints: PriceData[]) {
-    const filePath = await this.writeBatchToFile(dataPoints);
-    const file = await this.createBatchFile(filePath);
-    const batch = await this.uploadBatch(file);
-
-    return batch;
-  }
-
-  /**
    * Retrieves metadata for a specific batch using its ID.
    * @param batchId - The ID of the batch to retrieve metadata for.
    * @returns A promise that resolves to the `Batch` object.
@@ -107,11 +134,21 @@ export class OpenAIBatchProcessor {
     return openai.batches.retrieve(batchId);
   }
 
+  /**
+   * Retrieves the status of a specific batch using its ID.
+   * @param batchId - The ID of the batch to retrieve the status for.
+   * @returns A promise that resolves to the status of the batch.
+   */
   async getStatus(batchId: string) {
     const batch = await this.getBatchMetadata(batchId);
     return batch.status;
   }
 
+  /**
+   * Retrieves the result of a specific batch using its ID.
+   * @param fileId - The ID of the file to retrieve the result for.
+   * @returns A promise that resolves to an array of results from the batch.
+   */
   async getBatchResult(fileId: string) {
     const batch = await openai.files.content(fileId);
     const content = await batch.text();

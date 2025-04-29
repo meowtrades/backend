@@ -157,4 +157,8 @@ export async function checkMockData(req: Request, res: Response, next: NextFunct
 
 export const getMockChartData = async (req: Request, res: Response, next: NextFunction) => {
   const data = await mockTradeService.createChartData();
+  return res.status(200).json({
+    message: 'Mock chart data fetched successfully',
+    data,
+  });
 };

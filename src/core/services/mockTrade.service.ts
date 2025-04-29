@@ -156,7 +156,7 @@ export class MockTradeService {
       new PythProvider(),
       'Crypto.USDT/USD',
       // new Date(Date.now() - 1000 * 60 * 60 * 24 * 30 * 7), // 30 days
-      new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 7 days agi
+      new Date(Date.now() - 1000 * 60 * 60 * 24 * 90), // 7 days agi
       new Date(Date.now()),
       'D' as PythProviderInterval
     );
