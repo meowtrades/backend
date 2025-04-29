@@ -101,10 +101,25 @@ export class MockBatch {
   /**
    * Retrieves metadata for a specific batch using its ID.
    * @param batchId - The ID of the batch to retrieve metadata for.
-   * @returns A promise that resolves to the batch metadata.
+   * @returns A promise that resolves to the `Batch` object.
    */
   public async getBatchMetadata(batchId: string) {
-    const batch = await openai.batches.retrieve(batchId);
-    return batch;
+    return openai.batches.retrieve(batchId);
+  }
+
+  async getStatus(batchId: string) {
+    const batch = await this.getBatchMetadata(batchId);
+    return batch.status;
+  }
+
+  async getBatchResult(fileId: string) {
+    const batch = await openai.files.content(fileId);
+    const content = await batch.text();
+    const lines = content.split('\n').filter(line => line.trim() !== '');
+    const results = lines.map(line => {
+      const parsedLine = JSON.parse(line);
+      return parsedLine.choices[0].message.content;
+    });
+    return results;
   }
 }
