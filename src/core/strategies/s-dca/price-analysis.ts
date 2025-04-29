@@ -50,7 +50,7 @@ async function fetchHistoricalPrices(tokenId: string, days: number = 30): Promis
   }
 }
 
-function calculateMovingAverage(prices: PriceData[], period: number): number {
+export function calculateMovingAverage(prices: PriceData[], period: number): number {
   if (prices.length < period) {
     throw new Error('Not enough price data to calculate moving average');
   }
@@ -60,7 +60,7 @@ function calculateMovingAverage(prices: PriceData[], period: number): number {
   return sum / period;
 }
 
-function calculatePriceChangePercentage(prices: PriceData[]): number {
+export function calculatePriceChangePercentage(prices: PriceData[]): number {
   if (prices.length < 2) {
     throw new Error('Not enough price data to calculate price change');
   }

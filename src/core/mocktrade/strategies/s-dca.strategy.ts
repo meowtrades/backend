@@ -6,7 +6,6 @@ import {
 } from '../../strategies/s-dca/price-analysis';
 import { Strategy } from '../../strategies/strategies.interface';
 import { RiskLevel } from '../../types';
-import { FetchedData } from '../mock.fetcher';
 
 export class SDCAStrategy implements Strategy {
   async executePlan(
