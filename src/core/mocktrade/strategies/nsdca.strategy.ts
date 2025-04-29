@@ -4,19 +4,25 @@ import {
   calculateMovingAverage,
   calculatePriceChangePercentage,
 } from '../../strategies/s-dca/price-analysis';
-import { StrategyAdapter } from './strategy.adapter';
+import { BatchInput, PromptOutput, StrategyAdapter } from './strategy.adapter';
+
+type Indicators = {
+  movingAverage7Day: number;
+  movingAverage30Day: number;
+  priceChangePercentage: number;
+};
 
 export class SDCAStrategyAdapter implements StrategyAdapter {
-  /**
-   * Runs strategy specific logic
-   */
-  execute(dataPoints: PriceData[]) {
-    const out = [];
+  execute(dataPoints: PriceData[]): BatchInput[] {
+    if (dataPoints.length < 30) {
+      throw new Error('Not enough data points to execute strategy min 30');
+    }
 
-    for (let i = 30; i < dataPoints.length; i++) {
-      const indicators = this.prepareIndicators(dataPoints);
+    return dataPoints.slice(30).map((_, i) => {
+      const slicedDataPoints = dataPoints.slice(i, i + 30); // Use the last 30 data points
+      const indicators = this.prepareIndicators(slicedDataPoints);
       const prompt = this.generatePrompt(indicators);
-      out.push({
+      return {
         custom_id: generateCustomId(),
         method: 'POST',
         url: '/v1/chat/completions',
@@ -25,13 +31,11 @@ export class SDCAStrategyAdapter implements StrategyAdapter {
           messages: prompt,
           max_tokens: 1000,
         },
-      });
-    }
-
-    return out;
+      };
+    });
   }
 
-  prepareIndicators(dataPoints: PriceData[]) {
+  prepareIndicators(dataPoints: PriceData[]): Indicators {
     const movingAverage7Day = calculateMovingAverage(dataPoints, 7);
     const movingAverage30Day = calculateMovingAverage(dataPoints, 30);
     const priceChangePercentage = calculatePriceChangePercentage(dataPoints);
@@ -43,7 +47,7 @@ export class SDCAStrategyAdapter implements StrategyAdapter {
     };
   }
 
-  generatePrompt(data: ReturnType<typeof this.prepareIndicators>) {
+  generatePrompt(data: ReturnType<typeof this.prepareIndicators>): PromptOutput {
     data.movingAverage7Day = parseFloat(data.movingAverage7Day.toFixed(4));
     data.movingAverage30Day = parseFloat(data.movingAverage30Day.toFixed(4));
     data.priceChangePercentage = parseFloat(data.priceChangePercentage.toFixed(2));
