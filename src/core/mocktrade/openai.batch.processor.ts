@@ -5,6 +5,17 @@ import fs from 'fs';
 import { APIPromise } from 'openai/core';
 import { logger } from '../../utils/logger';
 
+export enum OpenAIStatus {
+  VALIDATING = 'validating',
+  FAILED = 'failed',
+  IN_PROGRESS = 'in_progress',
+  FINALISING = 'finalizing',
+  COMPLETED = 'completed',
+  EXPIRED = 'expired',
+  CANCELLING = 'cancelling',
+  CANCELLED = 'cancelled',
+}
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });

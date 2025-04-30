@@ -60,6 +60,7 @@ export interface IInvestmentPlan extends Document {
   tokenSymbol: string;
   startDate: Date;
   endDate?: Date;
+  batchId?: string;
   status: 'active' | 'stopped';
 }
 

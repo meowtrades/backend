@@ -164,84 +164,79 @@ export class MockTradeService {
     return data;
   }
 
-  async handleChartRequest(mockId: string) {
-    // Check if data exists in DB
-    const existingBatch = await MockDataBatch.findOne({ mockId });
+  /**
+   *
+   * @param mockId string
+   * @param tokenSymbol string
+   * @returns `Batchh` object
+   *
+   * Create a new batch of mock data for the given token symbol
+   * and link it to the given mock trade ID.
+   * The batch is created by fetching data from the Pyth provider,
+   */
+  async createMockChart(mockId: string, tokenSymbol: string) {
+    const data = await this.fetchMockData();
 
-    if (!existingBatch) {
-      // No batch exists, create a new batch
-      const newBatch = await this.createChartData();
-      const mockDataBatch = new MockDataBatch({
-        mockId,
-        batchId: newBatch.id,
-      });
-      await mockDataBatch.save();
+    const transformer = new PythTransformer();
+    const transformedData = transformer.transform(data);
 
-      return { message: 'Processing, come back later' };
-    }
-
-    // Check OpenAI batch status
-    const batchProcessor = new OpenAIBatchProcessor(new SDCAStrategyAdapter());
-    const batchStatus = await batchProcessor.getBatchMetadata(existingBatch.batchId);
-
-    if (batchStatus.status === 'completed') {
-      // Fetch results and store in DB
-      const results = await batchProcessor.getBatchResult(existingBatch.batchId);
-      existingBatch.data = results;
-      await existingBatch.save();
-
-      return { data: results };
-    } else {
-      // Batch is still processing
-      return { message: 'Processing, come back later' };
-    }
-  }
-
-  async createChartData() {
     const strategy = new SDCAStrategyAdapter();
     const batchProcessor = new OpenAIBatchProcessor(strategy);
+    const batch = await batchProcessor.process(transformedData);
 
-    const data = await this.fetchMockData();
-    const dataPoints = new PythTransformer().transform(data);
+    const newBatch = new MockDataBatch({
+      mockIds: [mockId],
+      batchId: batch.id,
+      tokenSymbol,
+      status: 'processing',
+      data: batch,
+    });
 
-    return await batchProcessor.process(dataPoints);
-  }
+    const investmentPlan = await InvestmentPlan.findOneAndUpdate(
+      { _id: mockId },
+      { batchId: newBatch.batchId }
+    );
 
-  async getChartData(mockId: string) {
-    const batch = await MockDataBatch.findOne({ mockId });
-
-    if (!batch) {
-      throw new Error('Batch not found');
+    if (!investmentPlan) {
+      throw new Error('Investment plan not found');
     }
 
-    return batch.data;
-  }
+    await Promise.all([newBatch.save(), investmentPlan.save()]);
+    logger.info(`Created new batch ${newBatch.batchId} for mock trade ${mockId}`);
 
-  async getOrCreateChartData(mockPlanId: string) {
-    const batch = await MockDataBatch.findOne({ mockId: mockPlanId });
+    return newBatch;
+  }
+  /**
+   * @param mockId
+   *
+   * Check if the mock trade with similar pre requisites already exists
+   * if yes, insert id of the current mock trade in the batch's mockIds array
+   * and link the batch to the current mock trade
+   * if no, create a new batch and insert the mock trade id
+   */
+  async linkOrCreateMockChart(mockId: string, tokenSymbol: string) {
+    const batchPromise = MockDataBatch.findOne({ tokenSymbol });
+    const mockTradePromise = InvestmentPlan.findById(mockId);
+
+    const [batch, mockTrade] = await Promise.all([batchPromise, mockTradePromise]);
+
+    if (!mockTrade) {
+      throw new Error('Mock trade not found');
+    }
 
     if (batch) {
+      // If batch exists, add the mockId to the batch
+      batch.mockIds.push(mockId);
+      mockTrade.batchId = batch.batchId; // Link the mock trade to the batch
+
+      await Promise.all([batch.save(), mockTrade.save()]);
+
+      logger.info(`Added mock trade ${mockId} to existing batch ${batch.batchId}`);
+
       return batch;
     }
 
-    const newBatch = await this.createChartData();
-
-    const mockDataBatch = new MockDataBatch({
-      mockId: mockPlanId,
-      batchId: newBatch.id,
-    });
-
-    await mockDataBatch.save();
-    logger.info(`Created new batch ${mockDataBatch.batchId} for mock plan ${mockPlanId}`);
-
-    return mockDataBatch;
-  }
-
-  async getChartStatus(fileId: string) {
-    const strategy = new SDCAStrategyAdapter();
-
-    const batchProcessor = new OpenAIBatchProcessor(strategy);
-
-    return await batchProcessor.getBatchMetadata(fileId);
+    // If batch doesn't exist, create a new one
+    return this.createMockChart(mockId, tokenSymbol);
   }
 }

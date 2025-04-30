@@ -5,6 +5,7 @@ import { MockTradeService } from '../../core/services/mockTrade.service';
 // import { z } from 'better-auth/*';
 import { Frequency, Range, RiskLevel } from '../../core/types';
 import { z } from 'zod';
+import { MockDataBatch } from '../../models/MockDataBatch';
 // CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
@@ -155,18 +156,24 @@ export const fetchMockData = async (req: Request, res: Response, next: NextFunct
 //   }
 // }
 
-export const getChartDataForMockTrade = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { mockId } = req.params;
+/**
+ *
+ * @param req Request
+ * @param res Response
+ *
+ * Function used to create mock batch if it doesn't exist
+ */
+const createMockBatch = (req: Request, res: Response) => {};
 
-    const result = await mockTradeService.handleChartRequest(mockId);
+/**
+ * @param req Request
+ * @param res Response
+ */
+export const getChartDataForMockTrade = async (req: Request, res: Response) => {
+  const mockId = req.params.id;
 
-    if (result.data) {
-      return res.status(200).json({ data: result.data });
-    } else {
-      return res.status(202).json({ message: result.message });
-    }
-  } catch (error) {
-    next(error);
+  const batch = await MockDataBatch.findOne({ mockId });
+
+  if (!batch) {
   }
 };
