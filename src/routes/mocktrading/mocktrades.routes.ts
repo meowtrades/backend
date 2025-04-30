@@ -19,6 +19,6 @@ router.get('/:id', mockTradeController.getMockTradeDetails);
 router.patch('/:id/stop', mockTradeController.stopMockTrade);
 
 // Route to get chart data for a specific mock trade
-router.get('/chart/:id', mockTradeController.getChartDataForMockTrade);
+router.get('/chart/:id', mockTradeController.getMockChart);
 
 export default router;

@@ -1,3 +1,4 @@
+// import { getMockTradeDetails as getMockDetails } from './mockTrade.controllers';
 import { CreateMockTradeInput } from './../../core/mocktrade/service';
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
@@ -139,41 +140,48 @@ export const fetchMockData = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// export async function checkMockData(req: Request, res: Response, next: NextFunction) {
-//   try {
-//     const data = await mockTradeService.checkMockData();
-
-//     return res.status(200).json({
-//       message: 'Mock data checked successfully',
-//       data,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(500).json({
-//       message: 'Error checking mock data',
-//       error,
-//     });
-//   }
-// }
-
 /**
  *
- * @param req Request
- * @param res Response
+ * @param req
+ * @param res
+ * @param next
  *
- * Function used to create mock batch if it doesn't exist
+ * Used to get the chart data for a specific mock trade
+ * if the batch exists for mock:
+ * - if batch is processing
+ * - call the batch processor to poll the batch status
+ * - if the batch is still processing, return a waiting response
+ * - if the batch is completed:
+ *   - update the batch status to completed
+ *   - store the batch data in the database
+ *   - return the chart data
+ * - if batch is completed, return the chart data
+ * if the batch does not exist:
+ * - execute create or link batch function
+ * - return a waiting response
+ * - if the batch creation fails, return an error response
+ * - if the batch creation succeeds, return a waiting response
  */
-const createMockBatch = (req: Request, res: Response) => {};
+export const getMockChart = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // const userId = req.user.id;
+    const mockTradeId = req.params.id;
 
-/**
- * @param req Request
- * @param res Response
- */
-export const getChartDataForMockTrade = async (req: Request, res: Response) => {
-  const mockId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(mockTradeId)) {
+      return res.status(400).json({ message: 'Invalid mock trade ID' });
+    }
 
-  const batch = await MockDataBatch.findOne({ mockId });
+    // Get the chart data for the mock trade
+    const chartData = await mockTradeService.getMockTradeChart(mockTradeId);
 
-  if (!batch) {
+    if (!chartData) {
+      return res.status(404).json({ message: 'Mock trade not found or access denied' });
+    }
+
+    res.status(200).json({
+      data: chartData,
+    });
+  } catch (error) {
+    next(error);
   }
 };

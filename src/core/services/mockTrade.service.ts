@@ -239,4 +239,70 @@ export class MockTradeService {
     // If batch doesn't exist, create a new one
     return this.createMockChart(mockId, tokenSymbol);
   }
+
+  /**
+   * Get chart data for a specific mock trade
+   */
+  async getChartDataForMockTrade(mockId: string) {
+    const investmentPlan = await InvestmentPlan.findById(mockId);
+    if (!investmentPlan) {
+      throw new Error('Investment plan not found');
+    }
+
+    const batch = await MockDataBatch.findOne({ mockIds: mockId });
+    if (!batch) {
+      throw new Error('Batch not found');
+    }
+
+    return batch.data;
+  }
+
+  async pollMockTradeBatch(batchId: string) {
+    const batch = await MockDataBatch.findOne({ batchId });
+
+    if (!batch) {
+      throw new Error('Batch not found');
+    }
+
+    const batchProcessor = new OpenAIBatchProcessor(new SDCAStrategyAdapter());
+    const status = await batchProcessor.getStatus(batchId);
+
+    if (status === 'completed') {
+      batch.status = 'completed';
+      await batch.save();
+      return batch;
+    }
+
+    if (status === 'failed') {
+      batch.status = 'failed';
+      await batch.save();
+      throw new Error('Batch processing failed');
+    }
+
+    return batch;
+  }
+
+  async getMockTradeChart(mockId: string) {
+    const investmentPlan = await InvestmentPlan.findById(mockId);
+
+    if (!investmentPlan) {
+      throw new Error('Investment plan not found');
+    }
+
+    const batch = await MockDataBatch.findOne({ mockIds: mockId });
+
+    if (!batch) {
+      return await this.linkOrCreateMockChart(mockId, investmentPlan.tokenSymbol);
+    }
+
+    if (batch.status === 'processing') {
+      return this.pollMockTradeBatch(batch.batchId);
+    }
+
+    if (batch.status === 'completed') {
+      return batch.data;
+    }
+
+    throw new Error('Batch is not in a valid state');
+  }
 }
