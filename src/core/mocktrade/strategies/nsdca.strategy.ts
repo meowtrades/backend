@@ -47,7 +47,7 @@ export class SDCAStrategyAdapter implements StrategyAdapter {
     };
   }
 
-  generatePrompt(data: ReturnType<typeof this.prepareIndicators>): PromptOutput {
+  generatePrompt(data: ReturnType<SDCAStrategyAdapter['prepareIndicators']>): PromptOutput {
     data.movingAverage7Day = parseFloat(data.movingAverage7Day.toFixed(4));
     data.movingAverage30Day = parseFloat(data.movingAverage30Day.toFixed(4));
     data.priceChangePercentage = parseFloat(data.priceChangePercentage.toFixed(2));
