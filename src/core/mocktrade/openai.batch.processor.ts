@@ -170,4 +170,9 @@ export class OpenAIBatchProcessor {
     });
     return results;
   }
+
+  static async listBatches() {
+    const batches = await openai.batches.list();
+    return batches.data;
+  }
 }

@@ -185,3 +185,12 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 };
+
+export const listBatches = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const batches = await mockTradeService.listBatches();
+    res.status(200).json({ data: batches });
+  } catch (error) {
+    next(error);
+  }
+};

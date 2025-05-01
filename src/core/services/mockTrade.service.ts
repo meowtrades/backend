@@ -19,7 +19,7 @@ import { MockExecutor } from '../mocktrade/mock.executor';
 import { ParsedQs } from 'qs';
 import { frequencyToInterval, rangeToDays } from '../../utils/convertors';
 import { MockDataBatch } from '../../models/MockDataBatch';
-import { OpenAIBatchProcessor } from '../mocktrade/openai.batch.processor';
+import { OpenAIBatchProcessor, OpenAIStatus } from '../mocktrade/openai.batch.processor';
 import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
 
@@ -188,7 +188,7 @@ export class MockTradeService {
       mockIds: [mockId],
       batchId: batch.id,
       tokenSymbol,
-      status: 'processing',
+      status: OpenAIStatus.IN_PROGRESS,
       data: batch,
     });
 
@@ -241,7 +241,11 @@ export class MockTradeService {
   }
 
   /**
-   * Get chart data for a specific mock trade
+   * @param mockId
+   *
+   * Get the chart data for a specific mock trade
+   * if the batch exists, return the data
+   * if the batch does not exist, create a new batch and return the data
    */
   async getChartDataForMockTrade(mockId: string) {
     const investmentPlan = await InvestmentPlan.findById(mockId);
@@ -304,5 +308,9 @@ export class MockTradeService {
     }
 
     throw new Error('Batch is not in a valid state');
+  }
+
+  async listBatches() {
+    return OpenAIBatchProcessor.listBatches();
   }
 }

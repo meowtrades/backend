@@ -12,6 +12,8 @@ router.post('/', mockTradeController.createMockTrade);
 // Route to get all active mock trades for the logged-in user
 router.get('/', mockTradeController.getActiveMockTrades);
 
+router.get('/batches', mockTradeController.listBatches);
+
 // Route to get details and performance history of a specific mock trade
 router.get('/:id', mockTradeController.getMockTradeDetails);
 
