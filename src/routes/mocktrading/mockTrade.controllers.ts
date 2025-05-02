@@ -10,6 +10,8 @@ import { MockDataBatch } from '../../models/MockDataBatch';
 import { SDCAStrategyAdapter } from '../../core/mocktrade/strategies/nsdca.strategy';
 import { OpenAIBatchProcessor } from '../../core/mocktrade/openai.batch.processor';
 import { OpenAIOutputTransformer } from '../../core/transformers/openai.output.transformer';
+import { SDCAChartTransformer } from '../../core/transformers/chart.transformer';
+import { InvestmentPlan } from '../../models/InvestmentPlan';
 // CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
@@ -187,8 +189,20 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
 
     const transformedChartData = transformedData.transform(chartData);
 
+    const mockPlan = await InvestmentPlan.findById(mockTradeId);
+
+    if (!mockPlan) {
+      return res.status(404).json({ message: 'Investment plan not found' });
+    }
+
+    const sdcaTransformedData = new SDCAChartTransformer().transform(
+      transformedChartData,
+      mockPlan?.amount
+    );
+
     res.status(200).json({
-      data: transformedChartData,
+      data: sdcaTransformedData,
+      totalInvestment: sdcaTransformedData.reduce((acc, item) => acc + item.price, 0),
     });
   } catch (error) {
     next(error);
