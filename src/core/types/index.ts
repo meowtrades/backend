@@ -40,3 +40,47 @@ export enum Range {
   THREE_MONTHS = '3M',
   ALL_TIME = 'ALL', // 1 year
 }
+
+export type OpenAIBatchOutput = {
+  id: string;
+  custom_id: string;
+  response: {
+    status_code: number;
+    request_id: string;
+    body: {
+      id: string;
+      object: string;
+      created: number;
+      model: string;
+      choices: Array<{
+        index: number;
+        message: {
+          role: string;
+          content: string;
+          refusal: string | null;
+          annotations: Array<any>;
+        };
+        logprobs: any | null;
+        finish_reason: string;
+      }>;
+      usage: {
+        prompt_tokens: number;
+        completion_tokens: number;
+        total_tokens: number;
+        prompt_tokens_details: {
+          cached_tokens: number;
+          audio_tokens: number;
+        };
+        completion_tokens_details: {
+          reasoning_tokens: number;
+          audio_tokens: number;
+          accepted_prediction_tokens: number;
+          rejected_prediction_tokens: number;
+        };
+      };
+      service_tier: string;
+      system_fingerprint: string | null;
+    };
+  };
+  error: any | null;
+};

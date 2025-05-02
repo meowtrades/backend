@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { MockDataBatch } from '../../models/MockDataBatch';
 import { SDCAStrategyAdapter } from '../../core/mocktrade/strategies/nsdca.strategy';
 import { OpenAIBatchProcessor } from '../../core/mocktrade/openai.batch.processor';
+import { OpenAIOutputTransformer } from '../../core/transformers/openai.output.transformer';
 // CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
@@ -180,8 +181,14 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
       return res.status(404).json({ message: 'Mock trade not found or access denied' });
     }
 
+    // console.log(chartData);
+
+    const transformedData = new OpenAIOutputTransformer<{ priceFactor: number }>();
+
+    const transformedChartData = transformedData.transform(chartData);
+
     res.status(200).json({
-      data: chartData,
+      data: transformedChartData,
     });
   } catch (error) {
     next(error);

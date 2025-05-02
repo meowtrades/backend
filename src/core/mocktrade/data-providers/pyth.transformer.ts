@@ -1,8 +1,8 @@
 import { PriceData } from '../../services/price.service';
+import { InputTransformer } from '../../transformers/input.transformer.interface';
 import { PythProviderData } from './pyth.provider';
-import { Transformer } from './transformer.interface';
 
-export class PythTransformer implements Transformer<PythProviderData> {
+export class PythTransformer implements InputTransformer<PythProviderData> {
   transform(data: PythProviderData): PriceData[] {
     const output = [];
 
