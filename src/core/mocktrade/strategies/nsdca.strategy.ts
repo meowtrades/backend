@@ -23,7 +23,7 @@ export class SDCAStrategyAdapter implements StrategyAdapter {
       const indicators = this.prepareIndicators(slicedDataPoints);
       const prompt = this.generatePrompt(indicators);
       return {
-        custom_id: generateCustomId(),
+        custom_id: generateCustomId(String(i)),
         method: 'POST',
         url: '/v1/chat/completions',
         body: {

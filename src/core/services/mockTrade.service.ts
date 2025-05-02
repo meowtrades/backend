@@ -300,6 +300,8 @@ export class MockTradeService {
       return await this.linkOrCreateMockChart(mockId, investmentPlan.tokenSymbol);
     }
 
+    logger.info(`Batch found for mock trade ${mockId}: ${batch.batchId}`);
+
     const batchStatus = batch.status as OpenAIStatus;
 
     if (batchStatus === 'in_progress') {
