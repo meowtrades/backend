@@ -269,10 +269,11 @@ export class MockTradeService {
     }
 
     const batchProcessor = new OpenAIBatchProcessor(new SDCAStrategyAdapter());
-    const status = await batchProcessor.getStatus(batchId);
+    const { status, output_file_id } = await batchProcessor.getBatchMetadata(batchId);
 
-    if (status === 'completed') {
+    if (status === 'completed' && output_file_id) {
       batch.status = 'completed';
+      batch.data = await batchProcessor.getBatchResult(output_file_id);
       await batch.save();
       return batch;
     }
@@ -299,7 +300,9 @@ export class MockTradeService {
       return await this.linkOrCreateMockChart(mockId, investmentPlan.tokenSymbol);
     }
 
-    if (batch.status === 'processing') {
+    const batchStatus = batch.status as OpenAIStatus;
+
+    if (batchStatus === 'in_progress') {
       return this.pollMockTradeBatch(batch.batchId);
     }
 

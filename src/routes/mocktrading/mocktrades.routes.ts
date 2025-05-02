@@ -14,6 +14,8 @@ router.get('/', mockTradeController.getActiveMockTrades);
 
 router.get('/batches', mockTradeController.listBatches);
 
+router.get('/batches/file/:id/content', mockTradeController.getBatchFileContent);
+
 // Route to get details and performance history of a specific mock trade
 router.get('/:id', mockTradeController.getMockTradeDetails);
 

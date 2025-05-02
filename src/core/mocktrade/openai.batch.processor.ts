@@ -157,18 +157,19 @@ export class OpenAIBatchProcessor {
 
   /**
    * Retrieves the result of a specific batch using its ID.
+   * Stores the result in an output file.
    * @param fileId - The ID of the file to retrieve the result for.
    * @returns A promise that resolves to an array of results from the batch.
    */
   async getBatchResult(fileId: string) {
     const batch = await openai.files.content(fileId);
     const content = await batch.text();
-    const lines = content.split('\n').filter(line => line.trim() !== '');
-    const results = lines.map(line => {
-      const parsedLine = JSON.parse(line);
-      return parsedLine.choices[0].message.content;
-    });
-    return results;
+
+    const outputFilePath = `./batch/output-${fileId}.jsonl`;
+    await fs.promises.writeFile(outputFilePath, content, { encoding: 'utf-8' });
+    logger.info(`Batch result written to: ${outputFilePath}`);
+
+    return content;
   }
 
   static async listBatches() {

@@ -7,6 +7,8 @@ import { MockTradeService } from '../../core/services/mockTrade.service';
 import { Frequency, Range, RiskLevel } from '../../core/types';
 import { z } from 'zod';
 import { MockDataBatch } from '../../models/MockDataBatch';
+import { SDCAStrategyAdapter } from '../../core/mocktrade/strategies/nsdca.strategy';
+import { OpenAIBatchProcessor } from '../../core/mocktrade/openai.batch.processor';
 // CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
@@ -193,4 +195,14 @@ export const listBatches = async (req: Request, res: Response, next: NextFunctio
   } catch (error) {
     next(error);
   }
+};
+
+export const getBatchFileContent = async (req: Request, res: Response, next: NextFunction) => {
+  const fileId = req.params.id;
+
+  const content = await new OpenAIBatchProcessor(new SDCAStrategyAdapter()).getBatchResult(fileId);
+
+  res.status(200).json({
+    data: content,
+  });
 };
