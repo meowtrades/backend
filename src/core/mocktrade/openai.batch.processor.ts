@@ -48,6 +48,14 @@ export class OpenAIBatchProcessor {
     const batch = await this.uploadBatch(file);
     logger.info(`Batch created: ${batch.id}`);
 
+    // Clean up the local batch file after uploading
+    try {
+      await this.deleteLocalBatchFile(filePath);
+      logger.info(`Local batch file deleted: ${filePath}`);
+    } catch (err) {
+      logger.error('Error deleting local batch file:', err);
+    }
+
     return batch;
   }
 
@@ -102,6 +110,16 @@ export class OpenAIBatchProcessor {
     });
   }
 
+  async deleteLocalBatchFile(filePath: string) {
+    // const filePath = `./batch/${fileName}`;
+    try {
+      await fs.promises.unlink(filePath);
+      logger.info(`File deleted: ${filePath}`);
+    } catch (err) {
+      logger.error('Error deleting file:', err);
+    }
+  }
+
   /**
    * Creates a batch file for OpenAI using the provided file path.
    * @param filePath - The path to the batch file to be created.
@@ -132,6 +150,11 @@ export class OpenAIBatchProcessor {
       endpoint: '/v1/chat/completions',
       completion_window: '24h',
     });
+
+    if (batch.status !== OpenAIStatus.VALIDATING) {
+      logger.error('Batch creation failed:', batch);
+      throw new Error('Batch creation failed');
+    }
 
     return batch;
   }
