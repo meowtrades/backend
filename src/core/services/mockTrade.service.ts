@@ -1,32 +1,22 @@
-import { create } from './../mocktrade/service';
 import { InvestmentPlan, IInvestmentPlan } from '../../models/InvestmentPlan';
 import { logger } from '../../utils/logger';
 import { PluginFactory } from '../strategies/s-dca/chains/factory';
 import { DCAService } from '../strategies/s-dca/index';
 import { User } from '../../models/User';
-import { RiskLevel, Frequency, Range } from '../types';
+import { RiskLevel, Frequency } from '../types';
 import { CreateMockTradeInput } from '../mocktrade/service';
 import { DataFetcher } from '../mocktrade/mock.fetcher';
-import { CoinGeckoDataProvider } from '../mocktrade/data-providers/coingecko.provider';
 import {
   PythProvider,
   PythProviderData,
   PythProviderInterval,
 } from '../mocktrade/data-providers/pyth.provider';
-import { Interval } from '../mocktrade/data-providers/provider.interface';
-import { PriceData } from './price.service';
-import { SDCAStrategy } from '../mocktrade/strategies/s-dca.strategy';
-import { MockExecutor } from '../mocktrade/mock.executor';
-import { ParsedQs } from 'qs';
-import { frequencyToInterval, rangeToDays } from '../../utils/convertors';
 import { MockDataBatch } from '../../models/MockDataBatch';
 import { OpenAIBatchProcessor, OpenAIStatus } from '../mocktrade/openai.batch.processor';
 import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
 import { TokenName, TokensRepository } from '../factories/tokens.factory';
 import { PythTokenTransformer } from '../transformers/pyth.token.transformer';
-import { z } from 'zod';
-import { StrategyFactory } from '../factories/strategy.factory';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -292,7 +282,11 @@ export class MockTradeService {
       throw new Error('Batch processing failed');
     }
 
-    return batch;
+    return {
+      status: 'in_progress',
+      message: 'Batch is still processing',
+      batchId,
+    };
   }
 
   async getMockTradeChart(mockId: string) {

@@ -184,6 +184,13 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
       return res.status(404).json({ message: 'Mock trade not found or access denied' });
     }
 
+    if (chartData.status && chartData.status === 'in_progress') {
+      return res.status(202).json({
+        message: 'Batch is still processing, please wait...',
+        data: null,
+      });
+    }
+
     // console.log(chartData);
 
     const transformedData = new OpenAIOutputTransformer<{ priceFactor: number }>();
