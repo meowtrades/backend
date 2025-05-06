@@ -191,8 +191,6 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
       });
     }
 
-    // console.log(chartData);
-
     const outputTransformer = new OpenAIOutputTransformer<{ priceFactor: number }>();
 
     const transformedChartData = outputTransformer.transform(chartData as string);
