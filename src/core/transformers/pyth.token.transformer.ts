@@ -11,6 +11,9 @@ export class PythTokenTransformer {
     ETH: 'Crypto.ETH/USD',
   } as const;
 
+  /**
+   * Transforms the token symbol into a Pyth token symbol.
+   */
   static transform(tokenSymbol: TokenName): PythToken {
     const transformedSymbol = this.symbols[tokenSymbol];
 

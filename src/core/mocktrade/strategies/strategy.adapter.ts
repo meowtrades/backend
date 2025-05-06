@@ -22,6 +22,12 @@ export type BatchInput = {
  */
 export interface StrategyAdapter {
   /**
+   * The name of the strategy.
+   * This is used to identify the strategy in the system.
+   */
+  name: string;
+
+  /**
    * Executes the strategy using the provided price data points.
    *
    * @param dataPoints - An array of price data points used to execute the strategy.

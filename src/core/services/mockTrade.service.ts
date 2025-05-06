@@ -22,6 +22,8 @@ import { MockDataBatch } from '../../models/MockDataBatch';
 import { OpenAIBatchProcessor, OpenAIStatus } from '../mocktrade/openai.batch.processor';
 import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
+import { TokenName } from '../factories/tokens.factory';
+import { PythTokenTransformer } from '../transformers/pyth.token.transformer';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -151,14 +153,14 @@ export class MockTradeService {
     }
   }
 
-  async fetchMockData() {
-    const fetcher = new DataFetcher(
-      new PythProvider(),
-      'Crypto.USDT/USD',
-      new Date(Date.now() - 1000 * 60 * 60 * 24 * 90), // 90 days agi
-      new Date(Date.now()),
-      'D' as PythProviderInterval
-    );
+  async fetchMockData(tokenSymbol: TokenName = 'USDT') {
+    const provider = new PythProvider();
+    const pythTokenSymbol = PythTokenTransformer.transform(tokenSymbol);
+    const startTime = new Date(Date.now() - 1000 * 60 * 60 * 24 * 90); // 90 days ago
+    const endTime = new Date(Date.now());
+    const interval = 'D' as PythProviderInterval;
+
+    const fetcher = new DataFetcher(provider, pythTokenSymbol, startTime, endTime, interval);
 
     const data = await fetcher.fetchData<PythProviderData>();
     return data;

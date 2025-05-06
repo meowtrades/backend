@@ -5,6 +5,7 @@ export interface IMockDataBatch extends Document {
   mockIds: string[]; // Array of mock trade IDs
   batchId: string; // Unique identifier for the batch by open ai
   tokenSymbol: string; // Token used for the mock trade
+  strategyName: string; // Name of the strategy used for the mock trade
   status: string; // Status of the batch (e.g., 'active', 'stopped')
   data: any;
 }
@@ -20,6 +21,10 @@ const MockDataBatchSchema = new Schema<IMockDataBatch>({
     required: true,
   },
   tokenSymbol: {
+    type: String,
+    required: true,
+  },
+  strategyName: {
     type: String,
     required: true,
   },

@@ -13,6 +13,8 @@ type Indicators = {
 };
 
 export class SDCAStrategyAdapter implements StrategyAdapter {
+  name: string = 'SDCA';
+
   execute(dataPoints: PriceData[]): BatchInput[] {
     if (dataPoints.length < 30) {
       throw new Error('Not enough data points to execute strategy min 30');
