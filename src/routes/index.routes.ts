@@ -12,8 +12,6 @@ router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-router.use('/details', detailsRouter);
-
 // User routes
 router.use('/user', user);
 
@@ -25,5 +23,7 @@ router.use('/admin', admin);
 
 // Mock Trading routes
 router.use('/mocktrades', mocktrades);
+
+router.use('/available', detailsRouter);
 
 export default router;

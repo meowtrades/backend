@@ -179,6 +179,15 @@ export class MockTradeService {
     const batchProcessor = new OpenAIBatchProcessor(strategy);
     const batch = await batchProcessor.process(transformedData);
 
+    // console.log({
+    //   mockIds: [mockId],
+    //   batchId: batch.id,
+    //   tokenSymbol,
+    //   strategyName,
+    //   status: OpenAIStatus.IN_PROGRESS,
+    //   data: batch,
+    // });
+
     const newBatch = new MockDataBatch({
       mockIds: [mockId],
       batchId: batch.id,
