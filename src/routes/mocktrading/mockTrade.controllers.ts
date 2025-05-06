@@ -178,7 +178,7 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
     }
 
     // Get the chart data for the mock trade
-    const chartData = await mockTradeService.getMockTradeChart(mockTradeId);
+    const chartData = (await mockTradeService.getMockTradeChart(mockTradeId)) as any; // FIXME: DONT USE ANY
 
     if (!chartData) {
       return res.status(404).json({ message: 'Mock trade not found or access denied' });
@@ -195,7 +195,7 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
 
     const transformedData = new OpenAIOutputTransformer<{ priceFactor: number }>();
 
-    const transformedChartData = transformedData.transform(chartData);
+    const transformedChartData = transformedData.transform(chartData as string);
 
     const mockPlan = await InvestmentPlan.findById(mockTradeId);
 

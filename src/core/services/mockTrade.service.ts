@@ -1,3 +1,4 @@
+import { IMockDataBatch, MockDataBatch } from './../../models/MockDataBatch';
 import { InvestmentPlan, IInvestmentPlan } from '../../models/InvestmentPlan';
 import { logger } from '../../utils/logger';
 import { PluginFactory } from '../strategies/s-dca/chains/factory';
@@ -11,7 +12,6 @@ import {
   PythProviderData,
   PythProviderInterval,
 } from '../mocktrade/data-providers/pyth.provider';
-import { MockDataBatch } from '../../models/MockDataBatch';
 import { OpenAIBatchProcessor, OpenAIStatus } from '../mocktrade/openai.batch.processor';
 import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
@@ -245,7 +245,7 @@ export class MockTradeService {
    * if the batch exists, return the data
    * if the batch does not exist, create a new batch and return the data
    */
-  async getChartDataForMockTrade(mockId: string) {
+  async getChartDataForMockTrade(mockId: string): Promise<string | IMockDataBatch> {
     const investmentPlan = await InvestmentPlan.findById(mockId);
     if (!investmentPlan) {
       throw new Error('Investment plan not found');
@@ -289,7 +289,15 @@ export class MockTradeService {
     };
   }
 
-  async getMockTradeChart(mockId: string) {
+  async getMockTradeChart(mockId: string): Promise<
+    | IMockDataBatch
+    | string
+    | {
+        status: string;
+        message: string;
+        batchId: string;
+      }
+  > {
     const investmentPlan = await InvestmentPlan.findById(mockId);
 
     if (!investmentPlan) {

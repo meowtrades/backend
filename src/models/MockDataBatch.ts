@@ -24,10 +24,6 @@ const MockDataBatchSchema = new Schema<IMockDataBatch>({
     type: String,
     required: true,
   },
-  strategyName: {
-    type: String,
-    required: true,
-  },
   status: {
     type: String,
     enum: Object.values(OpenAIStatus),
