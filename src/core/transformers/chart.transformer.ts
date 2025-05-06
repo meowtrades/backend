@@ -1,6 +1,6 @@
 import { PriceData } from '../services/price.service';
 
-export class SDCAChartTransformer {
+export class ChartTransformer {
   /**
    *
    * We don't have a timestamp field, right now, there is a 1D interval

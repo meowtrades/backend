@@ -10,7 +10,7 @@ import { MockDataBatch } from '../../models/MockDataBatch';
 import { SDCAStrategyAdapter } from '../../core/mocktrade/strategies/nsdca.strategy';
 import { OpenAIBatchProcessor } from '../../core/mocktrade/openai.batch.processor';
 import { OpenAIOutputTransformer } from '../../core/transformers/openai.output.transformer';
-import { SDCAChartTransformer } from '../../core/transformers/chart.transformer';
+import { ChartTransformer } from '../../core/transformers/chart.transformer';
 import { InvestmentPlan } from '../../models/InvestmentPlan';
 import { StrategyFactory } from '../../core/factories/strategy.factory';
 import { TokensRepository } from '../../core/factories/tokens.factory';
@@ -193,9 +193,9 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
 
     // console.log(chartData);
 
-    const transformedData = new OpenAIOutputTransformer<{ priceFactor: number }>();
+    const outputTransformer = new OpenAIOutputTransformer<{ priceFactor: number }>();
 
-    const transformedChartData = transformedData.transform(chartData as string);
+    const transformedChartData = outputTransformer.transform(chartData as string);
 
     const mockPlan = await InvestmentPlan.findById(mockTradeId);
 
@@ -203,14 +203,14 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
       return res.status(404).json({ message: 'Investment plan not found' });
     }
 
-    const sdcaTransformedData = new SDCAChartTransformer().transform(
+    const transformedChartOutput = new ChartTransformer().transform(
       transformedChartData,
       mockPlan?.amount
     );
 
     res.status(200).json({
-      data: sdcaTransformedData,
-      totalInvestment: sdcaTransformedData.reduce((acc, item) => acc + item.price, 0),
+      data: transformedChartOutput,
+      totalInvestment: transformedChartOutput.reduce((acc, item) => acc + item.price, 0),
     });
   } catch (error) {
     next(error);

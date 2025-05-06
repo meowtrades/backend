@@ -3,6 +3,7 @@ import user from './user/user.routes';
 import services from './services/services.routes';
 import admin from './admin/admin.routes';
 import mocktrades from './mocktrading/mocktrades.routes';
+import detailsRouter from './details/details.routes';
 
 const router = express.Router();
 
@@ -10,6 +11,8 @@ const router = express.Router();
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+router.use('/details', detailsRouter);
 
 // User routes
 router.use('/user', user);
