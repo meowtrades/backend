@@ -4,7 +4,7 @@ import { StrategyAdapter } from '../mocktrade/strategies/strategy.adapter';
 export class StrategyFactory {
   static strategies = {
     SDCA: new SDCAStrategyAdapter(),
-  };
+  } as const;
 
   static getStrategy(strategyName: keyof typeof StrategyFactory.strategies): StrategyAdapter {
     const strategy = this.strategies[strategyName];
@@ -16,3 +16,5 @@ export class StrategyFactory {
     return strategy;
   }
 }
+
+export type StrategyName = keyof typeof StrategyFactory.strategies;

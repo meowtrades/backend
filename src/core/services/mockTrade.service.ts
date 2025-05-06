@@ -1,3 +1,4 @@
+import { create } from './../mocktrade/service';
 import { InvestmentPlan, IInvestmentPlan } from '../../models/InvestmentPlan';
 import { logger } from '../../utils/logger';
 import { PluginFactory } from '../strategies/s-dca/chains/factory';
@@ -22,8 +23,10 @@ import { MockDataBatch } from '../../models/MockDataBatch';
 import { OpenAIBatchProcessor, OpenAIStatus } from '../mocktrade/openai.batch.processor';
 import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
-import { TokenName } from '../factories/tokens.factory';
+import { TokenName, TokensRepository } from '../factories/tokens.factory';
 import { PythTokenTransformer } from '../transformers/pyth.token.transformer';
+import { z } from 'zod';
+import { StrategyFactory } from '../factories/strategy.factory';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -176,8 +179,8 @@ export class MockTradeService {
    * and link it to the given mock trade ID.
    * The batch is created by fetching data from the Pyth provider,
    */
-  async createMockChart(mockId: string, tokenSymbol: string) {
-    const data = await this.fetchMockData();
+  async createMockChart(mockId: string, tokenSymbol: TokenName, strategyName: string) {
+    const data = await this.fetchMockData(tokenSymbol);
 
     const transformer = new PythTransformer();
     const transformedData = transformer.transform(data);
@@ -190,6 +193,7 @@ export class MockTradeService {
       mockIds: [mockId],
       batchId: batch.id,
       tokenSymbol,
+      strategyName,
       status: OpenAIStatus.IN_PROGRESS,
       data: batch,
     });
@@ -216,8 +220,8 @@ export class MockTradeService {
    * and link the batch to the current mock trade
    * if no, create a new batch and insert the mock trade id
    */
-  async linkOrCreateMockChart(mockId: string, tokenSymbol: string) {
-    const batchPromise = MockDataBatch.findOne({ tokenSymbol });
+  async linkOrCreateMockChart(mockId: string, tokenSymbol: string, strategyName: string) {
+    const batchPromise = MockDataBatch.findOne({ tokenSymbol, strategyName });
     const mockTradePromise = InvestmentPlan.findById(mockId);
 
     const [batch, mockTrade] = await Promise.all([batchPromise, mockTradePromise]);
@@ -238,8 +242,10 @@ export class MockTradeService {
       return batch;
     }
 
+    const token = TokensRepository.validateAndGetToken(tokenSymbol);
+
     // If batch doesn't exist, create a new one
-    return this.createMockChart(mockId, tokenSymbol);
+    return this.createMockChart(mockId, token, strategyName);
   }
 
   /**
@@ -299,7 +305,11 @@ export class MockTradeService {
     const batch = await MockDataBatch.findOne({ mockIds: mockId });
 
     if (!batch) {
-      return await this.linkOrCreateMockChart(mockId, investmentPlan.tokenSymbol);
+      return await this.linkOrCreateMockChart(
+        mockId,
+        investmentPlan.tokenSymbol,
+        investmentPlan.strategyId
+      );
     }
 
     logger.info(`Batch found for mock trade ${mockId}: ${batch.batchId}`);

@@ -12,13 +12,15 @@ import { OpenAIBatchProcessor } from '../../core/mocktrade/openai.batch.processo
 import { OpenAIOutputTransformer } from '../../core/transformers/openai.output.transformer';
 import { SDCAChartTransformer } from '../../core/transformers/chart.transformer';
 import { InvestmentPlan } from '../../models/InvestmentPlan';
+import { StrategyFactory } from '../../core/factories/strategy.factory';
+import { TokensRepository } from '../../core/factories/tokens.factory';
 // CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
 
 const createMockTradeSchema = z.object({
-  strategyId: z.string().min(1, 'strategyId is required'),
-  tokenSymbol: z.string().min(1, 'tokenSymbol is required'),
+  strategyId: z.enum(Object.keys(StrategyFactory.strategies) as [string, ...string[]]),
+  tokenSymbol: z.enum(Object.keys(TokensRepository.tokens) as [string, ...string[]]),
   amount: z.number().positive('Initial investment must be a positive number').default(100),
   riskLevel: z.nativeEnum(RiskLevel).default(RiskLevel.MEDIUM_RISK),
   frequency: z.nativeEnum(Frequency).default(Frequency.DAILY),
@@ -30,11 +32,7 @@ export const createMockTrade = async (req: Request, res: Response, next: NextFun
 
     let data: z.infer<typeof createMockTradeSchema>;
 
-    try {
-      data = createMockTradeSchema.parse(req.body);
-    } catch (error) {
-      return res.status(400).json({ message: 'Invalid request data' });
-    }
+    data = createMockTradeSchema.parse(req.body);
 
     const { strategyId, tokenSymbol, amount, riskLevel, frequency } = data;
 
@@ -51,6 +49,9 @@ export const createMockTrade = async (req: Request, res: Response, next: NextFun
       data: mockTrade,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors });
+    }
     next(error);
   }
 };

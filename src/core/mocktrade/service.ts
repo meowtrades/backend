@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import { MockTrade, IMockTrade } from '../../models/mockTrade.model';
 import { Frequency, RiskLevel } from '../types';
+import { z } from 'zod';
+import { StrategyFactory } from '../factories/strategy.factory';
 
 // --- Interfaces --- (Define expected inputs/outputs)
 
