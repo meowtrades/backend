@@ -8,7 +8,7 @@ export class OpenAIOutputTransformer<T> {
    * Extracts content from the OpenAI batch output and returns it in a format that can be used by the application.
    */
   transform(rawData: string): T[] {
-    const data = OpenAIOutputTransformer.convertJsonlToJsonArray(rawData) as OpenAIBatchOutput[];
+    const data = OpenAIOutputTransformer.convertJsonlToJsonArray(rawData);
 
     if (data.length === 0) {
       throw new Error('No valid data found in the input');
@@ -32,7 +32,7 @@ export class OpenAIOutputTransformer<T> {
    * @param jsonlString The JSONL string to convert
    * @returns An array of JSON objects
    */
-  static convertJsonlToJsonArray(jsonlString: string): any[] {
+  static convertJsonlToJsonArray(jsonlString: string): OpenAIBatchOutput[] {
     const lines = jsonlString.split('\n');
     const jsonArray = [];
     let buffer = '';
