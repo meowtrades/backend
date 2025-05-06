@@ -188,9 +188,7 @@ export class OpenAIBatchProcessor {
     const batch = await openai.files.content(fileId);
     const content = await batch.text();
 
-    const outputFilePath = `./batch/output-${fileId}.jsonl`;
-    await fs.promises.writeFile(outputFilePath, content, { encoding: 'utf-8' });
-    logger.info(`Batch result written to: ${outputFilePath}`);
+    logger.info(`Batch content retrieved for fileId: ${fileId}`);
 
     return content;
   }
