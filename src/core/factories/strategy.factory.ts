@@ -6,7 +6,7 @@ export class StrategyFactory {
     SDCA: new SDCAStrategyAdapter(),
   } as const;
 
-  static getStrategy(strategyName: keyof typeof StrategyFactory.strategies): StrategyAdapter {
+  static getStrategy(strategyName: StrategyName): StrategyAdapter {
     const strategy = this.strategies[strategyName];
 
     if (!strategy) {

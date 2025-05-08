@@ -19,6 +19,7 @@ export class ChartTransformer {
     const output = [];
     const now = new Date();
     const interval = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+    let accumulatedInvestment = 0;
 
     for (let i = 0; i < data.length; i++) {
       const dataPoint: PriceData = {
@@ -26,8 +27,9 @@ export class ChartTransformer {
         price: data[i].priceFactor,
         timestamp: Math.floor((now.getTime() - (data.length - i) * interval) / 1000),
       };
+      accumulatedInvestment += investmentAmount * dataPoint.price;
       output.push({
-        price: parseFloat((investmentAmount * dataPoint.price).toFixed(2)),
+        price: parseFloat(accumulatedInvestment.toFixed(2)),
         timestamp: dataPoint.timestamp,
       });
     }
