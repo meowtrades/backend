@@ -15,7 +15,7 @@ import {
 import { OpenAIBatchProcessor, OpenAIStatus } from '../mocktrade/openai.batch.processor';
 import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
-import { TokenName, TokensRepository } from '../factories/tokens.factory';
+import { TokenName, TokensRepository } from '../factories/tokens.repository';
 import { PythTokenTransformer } from '../transformers/pyth.token.transformer';
 
 export class MockTradeService {

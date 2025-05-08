@@ -1,4 +1,4 @@
-import { TokenName } from '../factories/tokens.factory';
+import { TokenName } from '../factories/tokens.repository';
 
 /**
  * Converts standard token symbol into something

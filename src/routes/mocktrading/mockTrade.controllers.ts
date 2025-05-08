@@ -13,7 +13,7 @@ import { OpenAIOutputTransformer } from '../../core/transformers/openai.output.t
 import { ChartTransformer } from '../../core/transformers/chart.transformer';
 import { InvestmentPlan } from '../../models/InvestmentPlan';
 import { StrategyFactory } from '../../core/factories/strategy.factory';
-import { TokensRepository } from '../../core/factories/tokens.factory';
+import { TokensRepository } from '../../core/factories/tokens.repository';
 // CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
