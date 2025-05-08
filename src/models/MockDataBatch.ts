@@ -27,7 +27,7 @@ const MockDataBatchSchema = new Schema<IMockDataBatch>({
   // Composite key of token, strategy and risk profile
   tokenSymbol: {
     type: String,
-    enum: Object.values(TokensRepository.tokens),
+    enum: Object.keys(TokensRepository.tokens),
     required: true,
   },
   strategyName: {
@@ -37,7 +37,7 @@ const MockDataBatchSchema = new Schema<IMockDataBatch>({
   },
   riskProfile: {
     type: String,
-    enum: Object.keys(RiskLevel),
+    enum: Object.values(RiskLevel),
     required: true,
   },
   status: {

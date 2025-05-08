@@ -197,4 +197,8 @@ export class OpenAIBatchProcessor {
     const batches = await openai.batches.list();
     return batches.data;
   }
+
+  static async cancelBatch(batchId: string) {
+    return await openai.batches.cancel(batchId);
+  }
 }

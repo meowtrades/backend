@@ -193,15 +193,27 @@ export class MockTradeService {
     //   data: batch,
     // });
 
-    const newBatch = new MockDataBatch({
-      mockIds: [mockId],
-      batchId: batch.id,
-      tokenSymbol,
-      strategyName,
-      riskProfile,
-      status: OpenAIStatus.IN_PROGRESS,
-      data: batch,
-    });
+    let newBatch: IMockDataBatch;
+
+    // Handle case where openai batch is created but not saved
+    // This can happen if the batch is created but not saved to the database
+    // due to a network error or other issue
+    // In this case, cancel the old batch to save tokens
+    try {
+      newBatch = new MockDataBatch({
+        mockIds: [mockId],
+        batchId: batch.id,
+        tokenSymbol,
+        strategyName,
+        riskProfile,
+        status: OpenAIStatus.IN_PROGRESS,
+        data: batch,
+      });
+    } catch (error) {
+      await OpenAIBatchProcessor.cancelBatch(batch.id);
+      logger.info(`Cancelled batch ${batch.id} due to error:`, error);
+      throw new Error('Error creating new batch');
+    }
 
     const investmentPlan = await InvestmentPlan.findOneAndUpdate(
       { _id: mockId },
