@@ -69,7 +69,7 @@ export class SDCAStrategyAdapter implements StrategyAdapter {
               * For moderate price increases (3-10%), return a mid-range number (1.4-1.7)
               * For significant price increases (>10%), return a number close to 2 (1.7-1.9)
     
-            Only return the number as a JSON object with a single field called "priceFactor". Nothing else.`,
+            Only return the number as a JSON object with a single field called "priceFactor". Nothing else. Don't annotate anything with \`\`\`json or \`\`\` either.`,
       },
       {
         role: 'user',
