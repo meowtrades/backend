@@ -7,6 +7,7 @@ const router = Router();
 router.get('/batches/file/:id/content', mockTradeController.getBatchFileContent);
 router.get('/batches', mockTradeController.listBatches);
 router.get('/chart/:id', mockTradeController.getMockChart);
+router.get('/batches/:id/cancel', mockTradeController.cancelBatch);
 
 router.use(getSession);
 

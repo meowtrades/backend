@@ -224,6 +224,29 @@ export const listBatches = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const cancelBatch = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const batchId = req.params.id;
+
+    if (!batchId) {
+      return res.status(400).json({ message: 'Batch ID is required' });
+    }
+
+    const result = await OpenAIBatchProcessor.cancelBatch(batchId);
+
+    if (!result) {
+      return res.status(404).json({ message: 'Batch not found' });
+    }
+
+    res.status(200).json({
+      message: 'Batch cancelled successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getBatchFileContent = async (req: Request, res: Response, next: NextFunction) => {
   const fileId = req.params.id;
 
