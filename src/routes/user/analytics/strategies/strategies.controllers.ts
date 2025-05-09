@@ -3,6 +3,8 @@ import { InvestmentPlan } from '../../../../models/InvestmentPlan';
 import { Request, Response } from 'express';
 import { parse } from 'path';
 import { TransactionAttempt } from '../../../../models/TransactionAttempt';
+import { TokenName, TokenRepository } from '../../../../core/factories/tokens.repository';
+import { StrategyFactory } from '../../../../core/factories/strategy.factory';
 
 interface AuthenticatedRequest extends Request {}
 
@@ -66,8 +68,18 @@ export const getStrategyById = async (req: AuthenticatedRequest, res: Response) 
     const profitPercentage = parseFloat(((profit / strategy.initialAmount) * 100).toFixed(2));
 
     const userStrategy: UserStrategy = {
+      chain: strategy.chain,
       _id: strategy._id.toString(),
       currentValue,
+      token: {
+        symbol: strategy.tokenSymbol,
+        name: TokenRepository.getTokenName(strategy.tokenSymbol),
+      },
+      strategyTemplate: {
+        id: 'SDCA',
+        name: StrategyFactory.getStrategyName('SDCA'),
+        type: 'dca',
+      },
       totalInvested,
       invested,
       profit,
@@ -129,6 +141,16 @@ export const getStrategyTransactions = async (req: AuthenticatedRequest, res: Re
 interface UserStrategy {
   _id: string;
   totalInvested: number;
+  chain: string;
+  token: {
+    symbol: string;
+    name: string;
+  };
+  strategyTemplate: {
+    id: string;
+    name: string;
+    type: string;
+  };
   profit: number;
   currentValue: number;
   profitPercentage: number;

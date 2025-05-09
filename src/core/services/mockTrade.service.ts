@@ -15,7 +15,7 @@ import {
 import { OpenAIBatchProcessor, OpenAIStatus } from '../mocktrade/openai.batch.processor';
 import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
-import { TokenName, TokensRepository } from '../factories/tokens.repository';
+import { TokenName, TokenRepository } from '../factories/tokens.repository';
 import { PythTokenTransformer } from '../transformers/pyth.token.transformer';
 
 export class MockTradeService {
@@ -264,7 +264,7 @@ export class MockTradeService {
       return batch;
     }
 
-    const token = TokensRepository.validateAndGetToken(tokenSymbol);
+    const token = TokenRepository.validateAndGetToken(tokenSymbol);
 
     // If batch doesn't exist, create a new one
     return this.createMockChart(mockId, token, strategyName, riskProfile);

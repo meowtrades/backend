@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { StrategyFactory } from '../../core/factories/strategy.factory';
-import { TokensRepository } from '../../core/factories/tokens.repository';
+import { TokenRepository } from '../../core/factories/tokens.repository';
 
 export const getAvailableStrategies = async (req: Request, res: Response) => {
   const strategies = Object.keys(StrategyFactory.strategies);
@@ -12,7 +12,7 @@ export const getAvailableStrategies = async (req: Request, res: Response) => {
 };
 
 export const getAvailableTokens = async (req: Request, res: Response) => {
-  const tokens = Object.keys(TokensRepository.tokens);
+  const tokens = Object.keys(TokenRepository.tokens);
 
   res.status(200).json({
     message: 'Available tokens',

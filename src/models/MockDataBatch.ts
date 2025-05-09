@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { OpenAIStatus } from '../core/mocktrade/openai.batch.processor';
-import { TokensRepository } from '../core/factories/tokens.repository';
+import { TokenRepository } from '../core/factories/tokens.repository';
 import { StrategyFactory } from '../core/factories/strategy.factory';
 import { RiskLevel } from '../core/types';
 
@@ -27,7 +27,7 @@ const MockDataBatchSchema = new Schema<IMockDataBatch>({
   // Composite key of token, strategy and risk profile
   tokenSymbol: {
     type: String,
-    enum: Object.keys(TokensRepository.tokens),
+    enum: Object.keys(TokenRepository.tokens),
     required: true,
   },
   strategyName: {

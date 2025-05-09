@@ -13,14 +13,14 @@ import { OpenAIOutputTransformer } from '../../core/transformers/openai.output.t
 import { ChartTransformer } from '../../core/transformers/chart.transformer';
 import { InvestmentPlan } from '../../models/InvestmentPlan';
 import { StrategyFactory } from '../../core/factories/strategy.factory';
-import { TokensRepository } from '../../core/factories/tokens.repository';
+import { TokenRepository } from '../../core/factories/tokens.repository';
 // CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
 
 const createMockTradeSchema = z.object({
   strategyId: z.enum(Object.keys(StrategyFactory.strategies) as [string, ...string[]]),
-  tokenSymbol: z.enum(Object.keys(TokensRepository.tokens) as [string, ...string[]]),
+  tokenSymbol: z.enum(Object.keys(TokenRepository.tokens) as [string, ...string[]]),
   amount: z.number().positive('Initial investment must be a positive number').default(100),
   riskLevel: z.nativeEnum(RiskLevel).default(RiskLevel.MEDIUM_RISK),
   frequency: z.nativeEnum(Frequency).default(Frequency.DAILY),

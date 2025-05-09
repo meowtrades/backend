@@ -6,6 +6,10 @@ export class StrategyFactory {
     SDCA: new SDCAStrategyAdapter(),
   } as const;
 
+  private static strategyNames = {
+    SDCA: 'Smart Dollar Cost Averaging',
+  } as const;
+
   static getStrategy(strategyName: StrategyName): StrategyAdapter {
     const strategy = this.strategies[strategyName];
 
@@ -14,6 +18,10 @@ export class StrategyFactory {
     }
 
     return strategy;
+  }
+
+  static getStrategyName(strategyId: StrategyName): string {
+    return this.strategyNames[strategyId];
   }
 }
 

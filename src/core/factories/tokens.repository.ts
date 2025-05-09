@@ -1,7 +1,7 @@
 /**
- *
+ * @description This is a repository for tokens. It is used to validate and get a token name.
  */
-export class TokensRepository {
+export class TokenRepository {
   static tokens = {
     USDT: 'Tether',
     BTC: 'Bitcoin',
@@ -17,6 +17,10 @@ export class TokensRepository {
 
     return tokenName as TokenName;
   }
+
+  static getTokenName(tokenSymbol: string): string {
+    return this.tokens[tokenSymbol as TokenName];
+  }
 }
 
-export type TokenName = keyof typeof TokensRepository.tokens;
+export type TokenName = keyof typeof TokenRepository.tokens;
