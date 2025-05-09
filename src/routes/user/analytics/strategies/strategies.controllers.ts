@@ -77,8 +77,7 @@ export const getStrategyById = async (req: AuthenticatedRequest, res: Response) 
       },
       strategyTemplate: {
         id: 'SDCA',
-        name: StrategyFactory.getStrategyName('SDCA'),
-        type: 'dca',
+        ...StrategyFactory.getStrategyDetails('SDCA'),
       },
       totalInvested,
       invested,
@@ -150,6 +149,7 @@ interface UserStrategy {
     id: string;
     name: string;
     type: string;
+    description: string;
   };
   profit: number;
   currentValue: number;
