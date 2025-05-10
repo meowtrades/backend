@@ -1,4 +1,3 @@
-// src/routes/user.ts
 import express from 'express';
 import {
   createOrUpdateUser,

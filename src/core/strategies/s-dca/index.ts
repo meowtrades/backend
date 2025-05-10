@@ -100,6 +100,27 @@ export class DCAService {
       let executionAmount = plan.amount;
       logger.info(`Initial execution amount for plan ${plan._id}: ${executionAmount}`);
 
+      // Check user's balance before proceeding
+      const userBalance = await UserBalance.findOne({ userId: plan.userId });
+      if (!userBalance) {
+        logger.warn(`UserBalance record not found for user ${plan.userId}, skipping execution.`);
+        return;
+      }
+
+      const chainBalance = userBalance.balances.find(
+        b => b.chainId === plan.chain && b.tokenSymbol === 'USDT'
+      );
+
+      const currentBalance = chainBalance ? parseFloat(chainBalance.balance) : 0;
+
+      if (currentBalance < executionAmount) {
+        logger.warn(
+          `Insufficient balance for user ${plan.userId} on chain ${plan.chain}. ` +
+            `Required: ${executionAmount}, Available: ${currentBalance}. Skipping execution.`
+        );
+        return;
+      }
+
       // If this is not the first execution, apply risk-based strategy
       if (plan.executionCount > 0) {
         logger.info(

@@ -1,13 +1,18 @@
 import mongoose from 'mongoose';
 import { MockTrade, IMockTrade } from '../../models/mockTrade.model';
+import { Frequency, RiskLevel } from '../types';
+import { z } from 'zod';
+import { StrategyFactory } from '../factories/strategy.factory';
 
 // --- Interfaces --- (Define expected inputs/outputs)
 
-interface CreateMockTradeInput {
-  userId: string;
+export interface CreateMockTradeInput {
+  // userId: string;
   strategyId: string;
   tokenSymbol: string;
-  initialInvestment?: number;
+  amount: number;
+  riskLevel: RiskLevel;
+  frequency: Frequency;
 }
 
 interface MockTradeDetails {
@@ -20,8 +25,8 @@ interface MockTradeDetails {
 /**
  * Creates a new mock trade simulation.
  */
-export const create = async (input: CreateMockTradeInput): Promise<IMockTrade> => {
-  const { userId, strategyId, tokenSymbol, initialInvestment } = input;
+export const create = async (userId: string, input: CreateMockTradeInput): Promise<IMockTrade> => {
+  const { strategyId, tokenSymbol, amount, riskLevel, frequency } = input;
 
   // TODO: Validate strategyId exists
   // TODO: Validate tokenSymbol is supported
@@ -30,7 +35,11 @@ export const create = async (input: CreateMockTradeInput): Promise<IMockTrade> =
     userId,
     strategyId,
     tokenSymbol,
-    initialInvestment, // Will use default from schema if not provided
+    amount,
+    initialAmount: amount, // Default to the same amount
+    initialInvestment: amount, // Default to the same amount
+    riskLevel,
+    frequency,
     status: 'active',
   });
 

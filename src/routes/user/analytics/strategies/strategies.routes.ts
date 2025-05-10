@@ -14,4 +14,6 @@ router.get('/active', strategiesController.getActiveStrategies);
 // Get one strategy by ID
 router.get('/:id', strategiesController.getStrategyById);
 
+// Get strategies' transactions
+router.get('/:id/transactions', strategiesController.getStrategyTransactions);
 export default router;
