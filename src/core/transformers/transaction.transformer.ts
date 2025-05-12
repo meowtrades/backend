@@ -22,7 +22,6 @@ export class TransactionTransformer {
   ): { transactions: Transaction[]; total: number } {
     const now = new Date();
     const interval = 24 * 60 * 60 * 1000; // 1 day in milliseconds
-    let accumulatedInvestment = 0;
 
     // Calculate total length for pagination
     const total = data.length;
@@ -40,6 +39,14 @@ export class TransactionTransformer {
       startIndex = Math.max(0, endIndex - limit);
     }
 
+    // First, calculate accumulated investment for all transactions up to each point
+    const accumulatedInvestments = data.reduce((acc: number[], transaction, index) => {
+      const previousTotal = index > 0 ? acc[index - 1] : 0;
+      const currentInvestment = investmentPlan.initialAmount * transaction.priceFactor;
+      acc.push(previousTotal + currentInvestment);
+      return acc;
+    }, []);
+
     // Process the required slice of data in reverse order
     const transactions = data
       .slice(startIndex, endIndex)
@@ -47,9 +54,6 @@ export class TransactionTransformer {
         // Calculate the actual index in the full dataset
         const actualIndex = startIndex + i;
         const timestamp = Math.floor((now.getTime() - (total - actualIndex) * interval) / 1000);
-
-        // Calculate accumulated investment up to this point
-        accumulatedInvestment = investmentPlan.initialAmount * transaction.priceFactor;
 
         return {
           id: generateCustomId(),
@@ -65,7 +69,7 @@ export class TransactionTransformer {
           updatedAt: new Date(timestamp * 1000).toISOString(),
           timestamp: timestamp,
           price: transaction.priceFactor * investmentPlan.initialAmount,
-          value: accumulatedInvestment,
+          value: accumulatedInvestments[actualIndex],
           type: 'buy',
           tokenSymbol: investmentPlan.tokenSymbol,
         };
