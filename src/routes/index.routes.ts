@@ -3,6 +3,7 @@ import user from './user/user.routes';
 import services from './services/services.routes';
 import admin from './admin/admin.routes';
 import mocktrades from './mocktrading/mocktrades.routes';
+import detailsRouter from './details/details.routes';
 
 const router = express.Router();
 
@@ -22,5 +23,7 @@ router.use('/admin', admin);
 
 // Mock Trading routes
 router.use('/mocktrades', mocktrades);
+
+router.use('/available', detailsRouter);
 
 export default router;

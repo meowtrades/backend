@@ -1,33 +1,47 @@
+// import { getMockTradeDetails as getMockDetails } from './mockTrade.controllers';
+import { CreateMockTradeInput } from './../../core/mocktrade/service';
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { MockTradeService } from '../../core/services/mockTrade.service';
+// import { z } from 'better-auth/*';
+import { Frequency, Range, RiskLevel } from '../../core/types';
+import { z } from 'zod';
+import { MockDataBatch } from '../../models/MockDataBatch';
+import { SDCAStrategyAdapter } from '../../core/mocktrade/strategies/nsdca.strategy';
+import { OpenAIBatchProcessor } from '../../core/mocktrade/openai.batch.processor';
+import { OpenAIOutputTransformer } from '../../core/transformers/openai.output.transformer';
+import { ChartTransformer } from '../../core/transformers/chart.transformer';
+import { InvestmentPlan } from '../../models/InvestmentPlan';
+import { StrategyFactory } from '../../core/factories/strategy.factory';
+import { TokenRepository } from '../../core/factories/tokens.repository';
+// CreateMockTradeInput;
 // Initialize the mock trade service
 const mockTradeService = new MockTradeService();
+
+const createMockTradeSchema = z.object({
+  strategyId: z.enum(Object.keys(StrategyFactory.strategies) as [string, ...string[]]),
+  tokenSymbol: z.enum(Object.keys(TokenRepository.tokens) as [string, ...string[]]),
+  amount: z.number().positive('Initial investment must be a positive number').default(100),
+  riskLevel: z.nativeEnum(RiskLevel).default(RiskLevel.MEDIUM_RISK),
+  frequency: z.nativeEnum(Frequency).default(Frequency.DAILY),
+});
 
 export const createMockTrade = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user.id;
 
-    const { strategyId, tokenSymbol, initialInvestment } = req.body;
+    let data: z.infer<typeof createMockTradeSchema>;
 
-    // Validate required fields
-    if (!strategyId || !tokenSymbol || !initialInvestment) {
-      return res.status(400).json({
-        message:
-          'Missing required fields. strategyId, tokenSymbol, and initialInvestment are required.',
-      });
-    }
+    data = createMockTradeSchema.parse(req.body);
 
-    // Validate investment amount
-    if (isNaN(Number(initialInvestment)) || Number(initialInvestment) <= 0) {
-      return res.status(400).json({ message: 'Initial investment must be a positive number' });
-    }
+    const { strategyId, tokenSymbol, amount, riskLevel, frequency } = data;
 
-    // Create the mock trade
     const mockTrade = await mockTradeService.createMockTrade(userId, {
       strategyId,
-      tokenSymbol,
-      initialInvestment: Number(initialInvestment),
+      tokenSymbol: tokenSymbol.toUpperCase(),
+      amount,
+      riskLevel,
+      frequency,
     });
 
     res.status(201).json({
@@ -35,7 +49,10 @@ export const createMockTrade = async (req: Request, res: Response, next: NextFun
       data: mockTrade,
     });
   } catch (error) {
-    next(error); // Pass error to the global error handler
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors });
+    }
+    next(error);
   }
 };
 
@@ -110,5 +127,140 @@ export const stopMockTrade = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// Placeholder for potential future strategy backtest endpoint
-// export const getStrategyBacktest = async (req: Request, res: Response, next: NextFunction) => { ... };
+export const fetchMockData = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await mockTradeService.fetchMockData();
+
+    console.log(data);
+
+    return res.status(200).json({
+      message: 'Mock data fetched successfully',
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: 'Error fetching mock data',
+      error,
+    });
+  }
+};
+
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ *
+ * Used to get the chart data for a specific mock trade
+ * if the batch exists for mock:
+ * - if batch is processing
+ * - call the batch processor to poll the batch status
+ * - if the batch is still processing, return a waiting response
+ * - if the batch is completed:
+ *   - update the batch status to completed
+ *   - store the batch data in the database
+ *   - return the chart data
+ * - if batch is completed, return the chart data
+ * if the batch does not exist:
+ * - execute create or link batch function
+ * - return a waiting response
+ * - if the batch creation fails, return an error response
+ * - if the batch creation succeeds, return a waiting response
+ */
+export const getMockChart = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // const userId = req.user.id;
+    const mockTradeId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(mockTradeId)) {
+      return res.status(400).json({ message: 'Invalid mock trade ID' });
+    }
+
+    // Get the chart data for the mock trade
+    const chartData = (await mockTradeService.getMockTradeChart(mockTradeId)) as any; // FIXME: DONT USE ANY
+
+    if (!chartData) {
+      return res.status(404).json({ message: 'Mock trade not found or access denied' });
+    }
+
+    if (typeof chartData !== 'string' && chartData.status && chartData.status === 'in_progress') {
+      return res.status(202).json({
+        message: 'Batch is still processing, please wait...',
+        data: null,
+      });
+    }
+
+    const outputTransformer = new OpenAIOutputTransformer<{ priceFactor: number }>();
+
+    const transformedChartData = outputTransformer.transform(chartData as string);
+
+    const mockPlan = await InvestmentPlan.findById(mockTradeId);
+
+    if (!mockPlan) {
+      return res.status(404).json({ message: 'Investment plan not found' });
+    }
+
+    const transformedChartOutput = new ChartTransformer().transform(
+      transformedChartData,
+      mockPlan?.amount
+    );
+
+    res.status(200).json({
+      data: transformedChartOutput,
+      totalInvestment: transformedChartOutput.reduce((acc, item) => acc + item.price, 0),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listBatches = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const batches = await mockTradeService.listBatches();
+    res.status(200).json({ data: batches });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelBatch = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const batchId = req.params.id;
+
+    if (!batchId) {
+      return res.status(400).json({ message: 'Batch ID is required' });
+    }
+
+    const result = await OpenAIBatchProcessor.cancelBatch(batchId);
+
+    if (!result) {
+      return res.status(404).json({ message: 'Batch not found' });
+    }
+
+    res.status(200).json({
+      message: 'Batch cancelled successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBatchFileContent = async (req: Request, res: Response, next: NextFunction) => {
+  const fileId = req.params.id;
+
+  const content = await new OpenAIBatchProcessor(new SDCAStrategyAdapter()).getBatchResult(fileId);
+
+  res.status(200).json({
+    data: content,
+  });
+};
+
+export const getTransactions = async (req: Request, res: Response, next: NextFunction) => {
+  const mockTradeId = req.params.id;
+
+  const transactions = await mockTradeService.getTransactions(mockTradeId);
+
+  res.status(200).json({ data: transactions });
+};
