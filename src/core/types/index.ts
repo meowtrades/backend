@@ -84,3 +84,21 @@ export type OpenAIBatchOutput = {
   };
   error: any | null;
 };
+
+export type Transaction = {
+  id: string;
+  planId: string;
+  userId: string;
+  chain: string;
+  amount: number;
+  status: string;
+  retryCount: number;
+  maxRetries: number;
+  lastAttemptTime: string;
+  createdAt: string;
+  updatedAt: string;
+  type: string;
+  tokenSymbol: string;
+  price: number;
+  value: number;
+};

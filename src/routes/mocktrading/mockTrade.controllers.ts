@@ -256,3 +256,11 @@ export const getBatchFileContent = async (req: Request, res: Response, next: Nex
     data: content,
   });
 };
+
+export const getTransactions = async (req: Request, res: Response, next: NextFunction) => {
+  const mockTradeId = req.params.id;
+
+  const transactions = await mockTradeService.getTransactions(mockTradeId);
+
+  res.status(200).json({ data: transactions });
+};

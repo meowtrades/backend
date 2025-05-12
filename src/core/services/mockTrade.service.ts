@@ -4,7 +4,7 @@ import { logger } from '../../utils/logger';
 import { PluginFactory } from '../strategies/s-dca/chains/factory';
 import { DCAService } from '../strategies/s-dca/index';
 import { User } from '../../models/User';
-import { RiskLevel, Frequency } from '../types';
+import { RiskLevel, Frequency, Transaction } from '../types';
 import { CreateMockTradeInput } from '../mocktrade/service';
 import { DataFetcher } from '../mocktrade/mock.fetcher';
 import {
@@ -17,6 +17,10 @@ import { SDCAStrategyAdapter } from '../mocktrade/strategies/nsdca.strategy';
 import { PythTransformer } from '../mocktrade/data-providers/pyth.transformer';
 import { TokenName, TokenRepository } from '../factories/tokens.repository';
 import { PythTokenTransformer } from '../transformers/pyth.token.transformer';
+import { OpenAIOutputTransformer } from '../transformers/openai.output.transformer';
+import { ChartTransformer } from '../transformers/chart.transformer';
+import { generateCustomId } from '../../utils/generators';
+import { TransactionTransformer } from '../transformers/transaction.transformer';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -364,5 +368,55 @@ export class MockTradeService {
 
   async listBatches() {
     return OpenAIBatchProcessor.listBatches();
+  }
+
+  /**
+   *
+   * @param mockTradeId
+   *
+   * Since there are no transactions in the mock trade, we need to create them
+   * we fetch batch data form mock data batches
+   * we transform the batch data into suitable data for the transactions
+   * we create transactions from the transformed data
+   * we return the transactions
+   *
+   * the data field may not contain right data.
+   * to make sure data is right, we need to check the batch status
+   * if batch is completed, we get the data
+   * pass the data through openai output transformer and chart transformer
+   * if batch is not completed, we return an error
+   *
+   * convert the transactions to the Transaction type
+   */
+  async getTransactions(
+    mockTradeId: string,
+    options?: { page?: number; limit?: number }
+  ): Promise<{ transactions: Transaction[]; total: number }> {
+    const investmentPlan = await InvestmentPlan.findById(mockTradeId);
+
+    if (!investmentPlan) {
+      throw new Error('Investment plan not found');
+    }
+
+    const batch = await MockDataBatch.findOne({
+      mockIds: mockTradeId,
+      status: 'completed',
+    });
+
+    if (!batch) {
+      throw new Error('Batch not found');
+    }
+
+    if (batch.status !== 'completed') {
+      throw new Error('Batch is not completed');
+    }
+
+    const { data } = batch;
+
+    const transformer = new OpenAIOutputTransformer<{ priceFactor: number }>();
+    const transformedData = transformer.transform(data);
+
+    const transactionTransformer = new TransactionTransformer();
+    return transactionTransformer.transform(transformedData, investmentPlan, options);
   }
 }

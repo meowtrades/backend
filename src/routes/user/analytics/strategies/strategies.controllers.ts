@@ -5,6 +5,7 @@ import { parse } from 'path';
 import { TransactionAttempt } from '../../../../models/TransactionAttempt';
 import { TokenName, TokenRepository } from '../../../../core/factories/tokens.repository';
 import { StrategyFactory } from '../../../../core/factories/strategy.factory';
+import { MockTradeService } from '../../../../core/services/mockTrade.service';
 
 interface AuthenticatedRequest extends Request {}
 
@@ -96,6 +97,24 @@ export const getStrategyById = async (req: AuthenticatedRequest, res: Response) 
   }
 };
 
+/**
+ *
+ * @param req
+ * @param res
+ * @returns
+ *
+ * get transactions for a strategy
+ *
+ * we need to get the transactions from the database
+ * we need to paginate the transactions
+ * we need to return the transactions
+ *
+ * this can accept both mock and real transactions
+ *
+ * if the strategy is mock, we need to get the transactions from the mock trade service
+ * if the strategy is real, we need to get the transactions from the database
+ *
+ */
 export const getStrategyTransactions = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -113,6 +132,30 @@ export const getStrategyTransactions = async (req: AuthenticatedRequest, res: Re
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
+
+    const strategy = await InvestmentPlan.findById(planId).where({ userId });
+
+    if (!strategy) {
+      return res.status(404).json({ message: 'Strategy not found' });
+    }
+
+    if (strategy.chain === 'mock') {
+      const mockTradeService = new MockTradeService();
+      const { transactions, total } = await mockTradeService.getTransactions(planId, {
+        page,
+        limit,
+      });
+
+      return res.status(200).json({
+        data: transactions,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      });
+    }
 
     // Fetch transactions for the specified strategy with pagination
     const transactions = await TransactionAttempt.find({ userId, planId }).skip(skip).limit(limit);
@@ -133,6 +176,7 @@ export const getStrategyTransactions = async (req: AuthenticatedRequest, res: Re
       },
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: 'Internal server error', error });
   }
 };

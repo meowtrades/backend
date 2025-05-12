@@ -23,6 +23,8 @@ router.get('/:id', mockTradeController.getMockTradeDetails);
 // Route to stop an active mock trade
 router.patch('/:id/stop', mockTradeController.stopMockTrade);
 
+router.get('/:id/transactions', mockTradeController.getTransactions);
+
 // Route to get chart data for a specific mock trade
 
 export default router;
