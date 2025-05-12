@@ -11,7 +11,7 @@ export class StrategyFactory {
       name: 'Smart Dollar Cost Averaging',
       type: 'dca',
       description:
-        'Smart Dollar Cost Averaging is a strategy that buys a fixed amount of a token at regular intervals. DCA reduces the impact of volatility by investing fixed amounts at regular intervals, regardless of asset price.',
+        'DCA reduces the impact of volatility by investing fixed amounts at regular intervals, regardless of asset price.',
     },
   } as const;
 
