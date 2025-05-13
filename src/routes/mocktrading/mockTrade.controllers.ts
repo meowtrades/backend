@@ -1,12 +1,8 @@
-// import { getMockTradeDetails as getMockDetails } from './mockTrade.controllers';
-import { CreateMockTradeInput } from './../../core/mocktrade/service';
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { MockTradeService } from '../../core/services/mockTrade.service';
-// import { z } from 'better-auth/*';
-import { Frequency, Range, RiskLevel } from '../../core/types';
+import { Frequency, RiskLevel } from '../../core/types';
 import { z } from 'zod';
-import { MockDataBatch } from '../../models/MockDataBatch';
 import { SDCAStrategyAdapter } from '../../core/mocktrade/strategies/nsdca.strategy';
 import { OpenAIBatchProcessor } from '../../core/mocktrade/openai.batch.processor';
 import { OpenAIOutputTransformer } from '../../core/transformers/openai.output.transformer';
@@ -14,8 +10,7 @@ import { ChartTransformer } from '../../core/transformers/chart.transformer';
 import { InvestmentPlan } from '../../models/InvestmentPlan';
 import { StrategyFactory } from '../../core/factories/strategy.factory';
 import { TokenRepository } from '../../core/factories/tokens.repository';
-// CreateMockTradeInput;
-// Initialize the mock trade service
+
 const mockTradeService = new MockTradeService();
 
 const createMockTradeSchema = z.object({

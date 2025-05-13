@@ -268,6 +268,8 @@ export class DCAService {
     const plan = await InvestmentPlan.create({
       userId,
       ...planData,
+      tokenSymbol: 'USDT', // FIXME: Remove this
+      strategyId: 'SDCA', // FIXME: Remove this
       initialAmount: planData.amount,
       isActive: true,
       executionCount: 0,
