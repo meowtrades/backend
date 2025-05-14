@@ -505,7 +505,22 @@ export const getStrategiesChart = async (req: AuthenticatedRequest, res: Respons
       timestamp: tx.createdAt.getTime(),
     }));
 
-    return res.status(200).json({ data: chartData });
+    let accumulatedInvestment = 0;
+
+    const output = chartData.map(tx => {
+      accumulatedInvestment += tx.price;
+      return {
+        price: accumulatedInvestment,
+        timestamp: tx.timestamp,
+      };
+    });
+
+    // console.log(output);
+
+    return res.status(200).json({
+      data: output,
+      totalInvestment: transactions.reduce((acc, tx) => acc + tx.invested, 0),
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Internal server error', error });
