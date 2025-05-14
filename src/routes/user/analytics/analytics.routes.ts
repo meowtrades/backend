@@ -21,4 +21,6 @@ router.get('/statistics/user', analyticsController.getUserStatistics);
 // Route to get platform-wide statistics (available to users)
 router.get('/statistics/platform', analyticsController.getPlatformStatistics);
 
+router.get('/overview', analyticsController.getUserOverview);
+
 export default router;

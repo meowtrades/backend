@@ -2,9 +2,22 @@ import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { InvestmentPlan } from '../../../models/InvestmentPlan';
 import { UserBalance } from '../../../models/UserBalance';
+import { StrategyFactory } from '../../../core/factories/strategy.factory';
+import { MockTradeService } from '../../../core/services/mockTrade.service';
+import { TransactionAttempt } from '../../../models/TransactionAttempt';
 
 // Extend Request type to include user (assuming auth middleware adds it)
-interface AuthenticatedRequest extends Request {}
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    image?: string | null;
+  };
+}
 
 /**
  * Get historical performance data for user's trades
@@ -174,6 +187,10 @@ export const getUserStatistics = async (
       totalInvestment,
       totalCurrentValue,
       totalProfitLoss,
+      activeStrategies: {
+        mock: mockTrades.length,
+        real: actualTrades.length,
+      },
       profitLossPercentage,
       bestPerformingStrategy: null, // Would need historical data to calculate
       worstPerformingStrategy: null, // Would need historical data to calculate
@@ -227,6 +244,73 @@ export const getPlatformStatistics = async (
     };
 
     res.status(200).json({ data: mockStats });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserOverview = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    let totalPortfolioValue = 0;
+    let totalInvested = 0;
+    let totalProfitLoss = 0;
+
+    // Get all active investment plans for this user
+    const activePlans = await InvestmentPlan.find({
+      userId,
+      isActive: true,
+    });
+
+    const mockTrades = activePlans.filter(plan => plan.chain === 'mock');
+    const realTrades = activePlans.filter(plan => plan.chain !== 'mock');
+
+    for (const plan of realTrades) {
+      const transactions = await TransactionAttempt.find({
+        planId: plan._id,
+        status: 'completed',
+      });
+
+      const totalInvestedAmount = transactions.reduce(
+        (sum, transaction) => sum + transaction.invested,
+        0
+      );
+
+      const totalValue = transactions.reduce((sum, transaction) => sum + transaction.value, 0);
+
+      const profitLoss = totalValue - totalInvestedAmount;
+
+      totalPortfolioValue += totalValue;
+      totalInvested += totalInvestedAmount;
+      totalProfitLoss += profitLoss;
+    }
+
+    // Calculate overall profit/loss percentage
+    const profitLossPercentage = totalInvested > 0 ? (totalProfitLoss / totalInvested) * 100 : 0;
+
+    // Compile the overview data
+    const overview = {
+      totalPortfolioValue: parseFloat(totalPortfolioValue.toFixed(2)),
+      totalInvested: parseFloat(totalInvested.toFixed(2)),
+      totalProfitLoss: parseFloat(totalProfitLoss.toFixed(2)),
+      profitLossPercentage: parseFloat(profitLossPercentage.toFixed(2)),
+      activeStrategies: {
+        total: activePlans.length,
+        mock: mockTrades.length,
+        real: activePlans.length - mockTrades.length,
+      },
+    };
+
+    res.status(200).json({ data: overview });
   } catch (error) {
     next(error);
   }

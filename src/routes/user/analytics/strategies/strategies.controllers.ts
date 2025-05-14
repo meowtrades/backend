@@ -1,11 +1,12 @@
 import { InvestmentPlan } from '../../../../models/InvestmentPlan';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { parse } from 'path';
 import { TransactionAttempt } from '../../../../models/TransactionAttempt';
 import { TokenName, TokenRepository } from '../../../../core/factories/tokens.repository';
-import { StrategyFactory } from '../../../../core/factories/strategy.factory';
+import { StrategyFactory, StrategyName } from '../../../../core/factories/strategy.factory';
 import { MockTradeService } from '../../../../core/services/mockTrade.service';
 import { logger } from '../../../../utils/logger';
+import { UserBalance } from '../../../../models/UserBalance';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -308,3 +309,184 @@ interface UserStrategy {
     totalTransactions: number;
   };
 }
+
+type ActiveStrategyAnalytics = {
+  id: string;
+  chain: string;
+  tokenSymbol: string;
+  strategyType: {
+    fullName: string;
+    shortName: string;
+  };
+  profit: number;
+  profitPercentage: number;
+  currentValue: number;
+  totalInvested: number;
+};
+
+/**
+ *
+ * get active strategies analytics
+ *
+ * this will return the active strategies with the analytics
+ * @returns ActiveStrategyAnalytics[]
+ */
+export const getActiveStrategiesAnalytics = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ message: 'User not authenticated' });
+  }
+
+  const activeStrategies = await InvestmentPlan.find({ userId, isActive: true });
+
+  const analytics = await Promise.all(
+    activeStrategies.map(async strategy => {
+      const strategyDetails = StrategyFactory.getStrategyDetails(
+        strategy.strategyId as StrategyName
+      );
+
+      let currentValue = 0;
+      let totalProfitLoss = 0;
+      let totalTokens = 0;
+      let averageBuyPrice = 0;
+      let currentPrice = 0;
+
+      if (strategy.chain === 'mock') {
+        const mockTradeService = new MockTradeService();
+        const { transactions } = await mockTradeService.getTransactions(strategy._id.toString(), {
+          page: 1,
+          limit: 1,
+        });
+      }
+
+      if (strategy.chain === 'real') {
+        const userBalance = await UserBalance.findOne({ userId });
+        const balance = userBalance?.balances.find(
+          b => b.chainId === strategy.chain && b.tokenSymbol === strategy.tokenSymbol
+        );
+
+        if (balance) {
+          currentValue = parseFloat(balance.balance);
+          totalProfitLoss = currentValue - strategy.initialInvestment;
+        }
+      }
+
+      return {
+        id: strategy._id,
+        chain: strategy.chain,
+        tokenSymbol: strategy.tokenSymbol,
+        strategyType: {
+          fullName: strategyDetails.name,
+          shortName: strategy.strategyId,
+        },
+        profit: 0,
+        profitPercentage: 0,
+        currentValue: 0,
+        totalInvested: 0,
+      };
+    })
+  );
+};
+
+export const getActiveStrategiesSeparated = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    // Get all active investment plans
+    const activeStrategies = await InvestmentPlan.find({ userId, isActive: true });
+
+    // Get user balance for real trades
+    const userBalance = await UserBalance.findOne({ userId });
+
+    const analytics = await Promise.all(
+      activeStrategies.map(async strategy => {
+        let currentValue = 0;
+        let totalProfitLoss = 0;
+        let totalTokens = 0;
+        let averageBuyPrice = 0;
+        let currentPrice = 0;
+
+        if (strategy.chain === 'mock') {
+          // For mock trades, get the latest transaction to get accumulated investment
+          const mockTradeService = new MockTradeService();
+          try {
+            const { transactions } = await mockTradeService.getTransactions(
+              strategy._id.toString(),
+              {
+                page: 1,
+                limit: 1,
+              }
+            );
+
+            if (transactions.length > 0) {
+              currentValue = transactions[0].value;
+              totalProfitLoss = currentValue - strategy.initialInvestment;
+            }
+          } catch (error) {
+            // If no transactions found, use the initial investment
+            currentValue = strategy.initialInvestment;
+            totalProfitLoss = 0;
+          }
+        } else {
+          // For real trades, get current value from user balance
+          const balance = userBalance?.balances.find(
+            b => b.chainId === strategy.chain && b.tokenSymbol === strategy.tokenSymbol
+          );
+
+          if (balance) {
+            currentValue = parseFloat(balance.balance);
+            totalProfitLoss = currentValue - strategy.initialInvestment;
+
+            // For real trades, we need to get token amounts from the blockchain
+            // This would require additional blockchain queries to get historical data
+            // For now, we'll use the current balance as an approximation
+            const currentTokenPrice = currentValue / parseFloat(balance.balance || '1');
+            totalTokens = currentValue / currentTokenPrice;
+            averageBuyPrice = strategy.initialInvestment / totalTokens;
+            currentPrice = currentTokenPrice;
+          }
+        }
+
+        const strategyDetails = StrategyFactory.getStrategyDetails(
+          strategy.strategyId as StrategyName
+        );
+
+        return {
+          id: strategy._id,
+          chain: strategy.chain,
+          metrics: {
+            totalInvested: strategy.initialInvestment,
+            tokensHeld: totalTokens,
+            averageBuyPrice,
+            currentPrice,
+            currentPortfolioValue: currentValue,
+            profitLoss: totalProfitLoss,
+            profitLossPercentage: (totalProfitLoss / strategy.initialInvestment) * 100,
+          },
+          tokenSymbol: strategy.tokenSymbol,
+          strategyType: {
+            fullName: strategyDetails.name,
+            shortName: strategy.strategyId,
+          },
+        };
+      })
+    );
+
+    return res.status(200).json({
+      data: analytics,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
