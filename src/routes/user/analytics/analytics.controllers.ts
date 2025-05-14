@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { InvestmentPlan } from '../../../models/InvestmentPlan';
-import { MockTrade } from '../../../models/mockTrade.model';
 import { UserBalance } from '../../../models/UserBalance';
 
 // Extend Request type to include user (assuming auth middleware adds it)

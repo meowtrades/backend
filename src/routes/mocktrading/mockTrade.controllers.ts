@@ -11,6 +11,7 @@ import { InvestmentPlan } from '../../models/InvestmentPlan';
 import { StrategyFactory } from '../../core/factories/strategy.factory';
 import { TokenRepository } from '../../core/factories/tokens.repository';
 import { MockDataBatch } from '../../models/MockDataBatch';
+import { MockTrade } from '../../models/mockTrade.model';
 const mockTradeService = new MockTradeService();
 
 const createMockTradeSchema = z.object({
@@ -170,6 +171,16 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
 
     if (!mongoose.Types.ObjectId.isValid(mockTradeId)) {
       return res.status(400).json({ message: 'Invalid mock trade ID' });
+    }
+
+    const plan = await InvestmentPlan.findById(mockTradeId);
+
+    if (!plan) {
+      return res.status(404).json({ message: 'Investment plan not found' });
+    }
+
+    if (plan.chain !== 'mock') {
+      return res.status(400).json({ message: 'Unsupported chain' });
     }
 
     // Get the chart data for the mock trade
