@@ -5,6 +5,7 @@ import { UserBalance } from '../../../models/UserBalance';
 import { StrategyFactory } from '../../../core/factories/strategy.factory';
 import { MockTradeService } from '../../../core/services/mockTrade.service';
 import { TransactionAttempt } from '../../../models/TransactionAttempt';
+import { TokenRepository } from '../../../core/factories/tokens.repository';
 
 // Extend Request type to include user (assuming auth middleware adds it)
 interface AuthenticatedRequest extends Request {
@@ -285,11 +286,15 @@ export const getUserOverview = async (
         0
       );
 
-      const totalValue = transactions.reduce((sum, transaction) => sum + transaction.value, 0);
+      const totalAmount = transactions.reduce((sum, transaction) => sum + transaction.to.amount, 0);
 
-      const profitLoss = totalValue - totalInvestedAmount;
+      const tokenPrice = await TokenRepository.getTokenPrice(plan.tokenSymbol);
 
-      totalPortfolioValue += totalValue;
+      const holdingValue = totalAmount * tokenPrice;
+
+      const profitLoss = holdingValue - totalInvestedAmount;
+
+      totalPortfolioValue += holdingValue;
       totalInvested += totalInvestedAmount;
       totalProfitLoss += profitLoss;
     }

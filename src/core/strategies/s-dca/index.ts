@@ -160,13 +160,17 @@ export class DCAService {
           executionAmount = updatedAmount + randomNumber;
         }
 
+        executionAmount = executionAmount * riskMultiplier * analysis.priceFactor;
+
         logger.info(`Plan ${plan._id}: Applied risk-based strategy
           Risk Level: ${plan.riskLevel}, Risk Multiplier: ${riskMultiplier}
           Price Factor: ${analysis.priceFactor}, Price Trend: ${
           analysis.isPriceGoingUp ? 'Up' : 'Down'
         }
           Initial Amount: ${plan.initialAmount}, Updated Amount: ${updatedAmount}
-          Random Component: ${randomNumber}, Final Amount: ${executionAmount}`);
+          Random Component: ${randomNumber}, Final Amount: ${executionAmount}
+          Token: ${plan.tokenSymbol}
+          `);
       }
 
       const price = await TokenRepository.getTokenPrice(plan.tokenSymbol);
@@ -290,7 +294,7 @@ export class DCAService {
     const plan = await InvestmentPlan.create({
       userId,
       ...planData,
-      tokenSymbol: 'USDT', // FIXME: Remove this
+      tokenSymbol: 'INJ', // FIXME: Remove this
       strategyId: 'SDCA', // FIXME: Remove this
       initialAmount: planData.amount,
       isActive: true,

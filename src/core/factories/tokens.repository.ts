@@ -9,6 +9,7 @@ export class TokenRepository {
     USDT: 'Tether',
     BTC: 'Bitcoin',
     ETH: 'Ethereum',
+    INJ: 'Injective',
   };
 
   private static priceCache: { [key: string]: { price: number; timestamp: number } } = {};
