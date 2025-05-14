@@ -77,7 +77,7 @@ export const getStrategiesAnalytics = async (planId: string) => {
     // Calculate portfolio value and profit metrics
     const portfolioValue = parseFloat((tokensHeld * currentTokenPrice).toFixed(2));
     const profit = parseFloat((portfolioValue - totalInvested).toFixed(2));
-    const profitPercentage = parseFloat(((profit / totalInvested) * 100).toFixed(2));
+    const profitPercentage = parseFloat(((profit / Math.max(totalInvested, 1)) * 100).toFixed(2));
     const averageBuyPrice =
       tokensHeld > 0 ? parseFloat((totalInvested / tokensHeld).toFixed(6)) : 0;
 

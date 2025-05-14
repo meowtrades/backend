@@ -302,7 +302,7 @@ export const getUserOverview = async (
       totalPortfolioValue: parseFloat(totalPortfolioValue.toFixed(2)),
       totalInvested: parseFloat(totalInvested.toFixed(2)),
       totalProfitLoss: parseFloat(totalProfitLoss.toFixed(2)),
-      profitLossPercentage: parseFloat(profitLossPercentage.toFixed(2)),
+      profitLossPercentage: parseFloat(profitLossPercentage.toFixed(2)) ?? 0,
       activeStrategies: {
         total: activePlans.length,
         mock: mockTrades.length,
