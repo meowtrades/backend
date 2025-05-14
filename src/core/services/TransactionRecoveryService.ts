@@ -3,7 +3,7 @@ import {
   TransactionStatus,
   ITransactionAttempt,
 } from '../../models/TransactionAttempt';
-import { InvestmentPlan } from '../../models/InvestmentPlan';
+import { InvestmentPlan, IInvestmentPlan } from '../../models/InvestmentPlan';
 import { User } from '../../models/User';
 import { PluginFactory } from '../strategies/s-dca/chains/factory';
 import { logger } from '../../utils/logger';
@@ -34,7 +34,19 @@ export class TransactionRecoveryService {
     planId: string,
     userId: string,
     chain: string,
-    amount: number
+    amount: number,
+    type: string,
+    from: {
+      token: string;
+      amount: number;
+    },
+    to: {
+      token: string;
+      amount: number;
+    },
+    price: number,
+    value: number,
+    invested: number
   ): Promise<ITransactionAttempt> {
     const transaction = await TransactionAttempt.create({
       planId,
@@ -45,6 +57,12 @@ export class TransactionRecoveryService {
       retryCount: 0,
       maxRetries: 3,
       lastAttemptTime: new Date(),
+      type,
+      from,
+      to,
+      price,
+      value,
+      invested,
     });
 
     logger.info(`Created transaction attempt record: ${transaction._id} for plan: ${planId}`);
@@ -69,7 +87,7 @@ export class TransactionRecoveryService {
   }
 
   /**
-   * Records a failed transaction for later recovery
+   * Records a failed transaction
    */
   public async markTransactionFailed(transactionId: string, error: string): Promise<void> {
     const transaction = await TransactionAttempt.findById(transactionId);
@@ -80,7 +98,6 @@ export class TransactionRecoveryService {
 
     transaction.status = TransactionStatus.FAILED;
     transaction.error = error;
-    transaction.lastAttemptTime = new Date();
     await transaction.save();
 
     logger.error(`Marked transaction ${transactionId} as failed: ${error}`);
@@ -127,106 +144,77 @@ export class TransactionRecoveryService {
    */
   private async retryTransaction(transaction: ITransactionAttempt): Promise<void> {
     try {
-      // Mark as retrying
-      transaction.status = TransactionStatus.RETRYING;
-      transaction.retryCount += 1;
-      transaction.lastAttemptTime = new Date();
-      await transaction.save();
-
-      logger.info(
-        `Retrying transaction ${transaction._id}, attempt ${transaction.retryCount} of ${transaction.maxRetries}`
-      );
-
-      // Get the plan and user information
+      // Get the investment plan
       const plan = await InvestmentPlan.findById(transaction.planId);
       if (!plan) {
-        logger.error(`Plan ${transaction.planId} not found for transaction ${transaction._id}`);
-        transaction.status = TransactionStatus.FAILED;
-        transaction.error = 'Plan not found';
-        await transaction.save();
-        return;
+        throw new Error(`Investment plan ${transaction.planId} not found`);
       }
 
-      // Check if plan is still active
-      if (!plan.isActive) {
-        logger.info(
-          `Plan ${transaction.planId} is no longer active, cancelling recovery for transaction ${transaction._id}`
-        );
-        transaction.status = TransactionStatus.FAILED;
-        transaction.error = 'Plan no longer active';
-        await transaction.save();
-        return;
+      // Execute the transaction based on type
+      let txHash: string;
+      switch (transaction.type) {
+        case 'buy':
+          txHash = await this.executeBuyTransaction(transaction, plan);
+          break;
+        case 'sell':
+          txHash = await this.executeSellTransaction(transaction, plan);
+          break;
+        case 'swap':
+          txHash = await this.executeSwapTransaction(transaction, plan);
+          break;
+        default:
+          throw new Error(`Unsupported transaction type: ${transaction.type}`);
       }
 
-      const user = await User.findOne({ _id: transaction.userId });
-      if (!user) {
-        logger.error(`User ${transaction.userId} not found for transaction ${transaction._id}`);
-        transaction.status = TransactionStatus.FAILED;
-        transaction.error = 'User not found';
-        await transaction.save();
-        return;
-      }
-
-      // Get the appropriate plugin
-      const plugin = PluginFactory.getPlugin(transaction.chain);
-
-      // Execute the transaction
-      logger.info(
-        `Executing recovered transaction ${transaction._id} for amount ${transaction.amount}`
-      );
-      const txHash = await plugin.sendSwapTransaction(transaction.amount, user.address);
-
-      // Mark as complete
+      // Update transaction status
       transaction.status = TransactionStatus.COMPLETED;
       transaction.txHash = txHash;
       await transaction.save();
 
-      // Update plan data if this was successful
+      // Update plan data
       plan.lastExecutionTime = new Date();
-      plan.totalInvested += transaction.amount;
+      plan.totalInvested += transaction.invested;
       plan.executionCount += 1;
 
       // After first execution, save the initial amount for future calculations
       if (plan.executionCount === 1) {
-        plan.initialAmount = plan.amount;
+        plan.initialAmount = transaction.invested;
       }
 
       await plan.save();
 
-      logger.info(`Successfully recovered transaction ${transaction._id}, txHash: ${txHash}`);
+      logger.info(`Successfully completed transaction ${transaction._id}, txHash: ${txHash}`);
     } catch (error) {
-      logger.error(`Failed to retry transaction ${transaction._id}:`, error);
+      logger.error(`Failed to execute transaction ${transaction._id}:`, error);
 
-      // If we've exceeded max retries, give up
-      if (transaction.retryCount >= transaction.maxRetries) {
-        logger.error(
-          `Transaction ${transaction._id} has exceeded max retries (${transaction.maxRetries}), marking as permanently failed`
-        );
-
-        // Try to notify admin or user here about permanent failure
-
-        transaction.status = TransactionStatus.FAILED;
-        transaction.error = `Exceeded max retries: ${error}`;
-        await transaction.save();
-      } else {
-        // Otherwise, mark as failed for next retry cycle
-        transaction.status = TransactionStatus.FAILED;
-        transaction.error = `Retry attempt ${transaction.retryCount} failed: ${error}`;
-
-        // Implement exponential backoff - wait longer between retries
-        // Each retry waits 2^retryCount minutes (capped at maxRetryDelayMinutes)
-        const backoffMinutes = Math.min(
-          Math.pow(2, transaction.retryCount),
-          this.maxRetryDelayMinutes
-        );
-        transaction.lastAttemptTime = new Date(Date.now() + backoffMinutes * 60 * 1000);
-
-        await transaction.save();
-        logger.info(
-          `Scheduled next retry for transaction ${transaction._id} in ${backoffMinutes} minutes`
-        );
-      }
+      transaction.status = TransactionStatus.FAILED;
+      transaction.error = `Transaction failed: ${error}`;
+      await transaction.save();
     }
+  }
+
+  private async executeBuyTransaction(
+    transaction: ITransactionAttempt,
+    plan: IInvestmentPlan
+  ): Promise<string> {
+    // Implement buy transaction logic
+    throw new Error('Buy transaction not implemented');
+  }
+
+  private async executeSellTransaction(
+    transaction: ITransactionAttempt,
+    plan: IInvestmentPlan
+  ): Promise<string> {
+    // Implement sell transaction logic
+    throw new Error('Sell transaction not implemented');
+  }
+
+  private async executeSwapTransaction(
+    transaction: ITransactionAttempt,
+    plan: IInvestmentPlan
+  ): Promise<string> {
+    // Implement swap transaction logic
+    throw new Error('Swap transaction not implemented');
   }
 
   /**
@@ -242,7 +230,7 @@ export class TransactionRecoveryService {
     const [pending, failed, retrying, completed] = await Promise.all([
       TransactionAttempt.countDocuments({ status: TransactionStatus.PENDING }),
       TransactionAttempt.countDocuments({ status: TransactionStatus.FAILED }),
-      TransactionAttempt.countDocuments({ status: TransactionStatus.RETRYING }),
+      TransactionAttempt.countDocuments({ status: TransactionStatus.PENDING }),
       TransactionAttempt.countDocuments({ status: TransactionStatus.COMPLETED }),
     ]);
 

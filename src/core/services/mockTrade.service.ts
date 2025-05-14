@@ -57,7 +57,7 @@ export class MockTradeService {
         tokenSymbol: data.tokenSymbol.toUpperCase(),
         initialAmount: data.amount,
         chain: 'mock',
-        amount: data.amount,
+        amount: 0,
         initialInvestment: data.amount, // Default to the same amount
         riskLevel: data.riskLevel || RiskLevel.MEDIUM_RISK,
         frequency: data.frequency || Frequency.DAILY,
@@ -184,18 +184,15 @@ export class MockTradeService {
     const transformer = new PythTransformer();
     const transformedData = transformer.transform(data);
 
+    // Extract price history from transformed data
+    const priceHistory = transformedData.map(point => ({
+      price: point.price,
+      timestamp: point.timestamp,
+    }));
+
     const strategy = new SDCAStrategyAdapter();
     const batchProcessor = new OpenAIBatchProcessor(strategy);
     const batch = await batchProcessor.process(transformedData);
-
-    // console.log({
-    //   mockIds: [mockId],
-    //   batchId: batch.id,
-    //   tokenSymbol,
-    //   strategyName,
-    //   status: OpenAIStatus.IN_PROGRESS,
-    //   data: batch,
-    // });
 
     let newBatch: IMockDataBatch;
 
@@ -212,6 +209,7 @@ export class MockTradeService {
         riskProfile,
         status: OpenAIStatus.IN_PROGRESS,
         data: batch,
+        priceHistory,
       });
     } catch (error) {
       await OpenAIBatchProcessor.cancelBatch(batch.id);
@@ -270,6 +268,8 @@ export class MockTradeService {
 
     const token = TokenRepository.validateAndGetToken(tokenSymbol);
 
+    logger.info(`Creating new batch for mock trade ${mockId}`);
+
     // If batch doesn't exist, create a new one
     return this.createMockChart(mockId, token, strategyName, riskProfile);
   }
@@ -281,7 +281,9 @@ export class MockTradeService {
    * if the batch exists, return the data
    * if the batch does not exist, create a new batch and return the data
    */
-  async getChartDataForMockTrade(mockId: string): Promise<string | IMockDataBatch> {
+  async getChartDataForMockTrade(
+    mockId: string
+  ): Promise<string | IMockDataBatch | { data: { price: number; timestamp: number }[] }> {
     const investmentPlan = await InvestmentPlan.findById(mockId);
     if (!investmentPlan) {
       throw new Error('Investment plan not found');
@@ -292,7 +294,23 @@ export class MockTradeService {
       throw new Error('Batch not found');
     }
 
-    return batch.data;
+    if (batch.status === 'completed') {
+      const transformer = new OpenAIOutputTransformer<{ priceFactor: number }>();
+      const transformedData = transformer.transform(batch.data);
+
+      const chartTransformer = new ChartTransformer();
+      const chartData = await chartTransformer.transform(
+        transformedData,
+        investmentPlan.initialAmount,
+        batch.batchId
+      );
+
+      return {
+        data: chartData,
+      };
+    }
+
+    return batch;
   }
 
   async pollMockTradeBatch(batchId: string) {
@@ -342,6 +360,8 @@ export class MockTradeService {
 
     const batch = await MockDataBatch.findOne({ mockIds: mockId });
 
+    // console.log(batch);
+
     if (!batch) {
       return await this.linkOrCreateMockChart(
         mockId,
@@ -351,7 +371,7 @@ export class MockTradeService {
       );
     }
 
-    logger.info(`Batch found for mock trade ${mockId}: ${batch.batchId}`);
+    logger.info(`Batch found for mock trade ${mockId} ${batch._id}: ${batch.batchId}`);
 
     const batchStatus = batch.status as OpenAIStatus;
 
@@ -404,7 +424,10 @@ export class MockTradeService {
     });
 
     if (!batch) {
-      throw new Error('Batch not found');
+      return {
+        transactions: [],
+        total: 0,
+      };
     }
 
     if (batch.status !== 'completed') {

@@ -12,6 +12,10 @@ export interface IMockDataBatch extends Document {
   riskProfile: string; // Risk profile used for the mock trade
   status: string; // Status of the batch (e.g., 'active', 'stopped')
   data: any;
+  priceHistory: {
+    price: number;
+    timestamp: number;
+  }[];
 }
 
 // Will store multiple mock ids, since each batch can be used for multiple mock trades
@@ -50,6 +54,12 @@ const MockDataBatchSchema = new Schema<IMockDataBatch>({
     type: Object,
     required: true,
   },
+  priceHistory: [
+    {
+      price: { type: Number, required: true },
+      timestamp: { type: Number, required: true },
+    },
+  ],
 });
 
 export const MockDataBatch = mongoose.model<IMockDataBatch>('MockDataBatch', MockDataBatchSchema);

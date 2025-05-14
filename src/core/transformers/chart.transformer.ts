@@ -1,36 +1,40 @@
-import { PriceData } from '../services/price.service';
+import { MockDataBatch } from '../../models/MockDataBatch';
 
 export class ChartTransformer {
   /**
    *
-   * We don't have a timestamp field, right now, there is a 1D interval
-   * between each data point so generate a timestamp based on the index
-   * The oldest data point will be 90D ago and the most recent will be now or yesterday
-   *
    * @param data
-   * @param priceData
    * @param investmentAmount
-   * @returns { investment: number, timestamp: string }[]
+   * @param batchId
+   * @returns { price: number, timestamp: number }[]
    */
-  transform(
+  async transform(
     data: { priceFactor: number }[],
-    investmentAmount: number
-  ): { price: number; timestamp: number }[] {
+    investmentAmount: number,
+    batchId: string
+  ): Promise<{ price: number; timestamp: number }[]> {
+    // Get the batch to access price history
+    const batch = await MockDataBatch.findOne({ batchId });
+
+    // console.log(batch);
+
+    if (!batch) {
+      throw new Error('Batch not found');
+    }
+
     const output = [];
-    const now = new Date();
-    const interval = 24 * 60 * 60 * 1000; // 1 day in milliseconds
     let accumulatedInvestment = 0;
 
     for (let i = 0; i < data.length; i++) {
-      const dataPoint: PriceData = {
-        date: new Date(now.getTime() - (data.length - i) * interval).toISOString(),
-        price: data[i].priceFactor,
-        timestamp: Math.floor((now.getTime() - (data.length - i) * interval) / 1000),
-      };
-      accumulatedInvestment += investmentAmount * dataPoint.price;
+      const priceHistoryPoint = batch.priceHistory[i];
+      if (!priceHistoryPoint) {
+        throw new Error(`Price history not found for index ${i}`);
+      }
+
+      accumulatedInvestment += investmentAmount * data[i].priceFactor;
       output.push({
         price: parseFloat(accumulatedInvestment.toFixed(2)),
-        timestamp: dataPoint.timestamp,
+        timestamp: priceHistoryPoint.timestamp,
       });
     }
 

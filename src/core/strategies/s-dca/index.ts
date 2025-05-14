@@ -8,6 +8,7 @@ import { analyzeTokenPrice, getRiskMultiplier } from './price-analysis';
 import { PluginFactory } from './chains/factory';
 import { RiskLevel } from '../../types';
 import { TransactionRecoveryService } from '../../services/TransactionRecoveryService';
+import { TokenRepository } from '../../factories/tokens.repository';
 
 export class DCAService {
   private plugins: Map<string, DCAPlugin>;
@@ -157,12 +158,22 @@ export class DCAService {
           Random Component: ${randomNumber}, Final Amount: ${executionAmount}`);
       }
 
+      const price = await TokenRepository.getTokenPrice(plan.tokenSymbol);
+      const value = price * executionAmount;
+      const invested = executionAmount;
+
       // Create a transaction record for tracking and recovery
       const transaction = await this.recoveryService.createTransactionAttempt(
         plan._id.toString(),
         plan.userId,
         plan.chain,
-        executionAmount
+        executionAmount,
+        'swap',
+        { token: 'USDT', amount: executionAmount },
+        { token: plan.tokenSymbol, amount: executionAmount / price },
+        price,
+        value,
+        invested
       );
 
       try {

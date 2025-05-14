@@ -10,7 +10,7 @@ import { ChartTransformer } from '../../core/transformers/chart.transformer';
 import { InvestmentPlan } from '../../models/InvestmentPlan';
 import { StrategyFactory } from '../../core/factories/strategy.factory';
 import { TokenRepository } from '../../core/factories/tokens.repository';
-
+import { MockDataBatch } from '../../models/MockDataBatch';
 const mockTradeService = new MockTradeService();
 
 const createMockTradeSchema = z.object({
@@ -173,7 +173,7 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
     }
 
     // Get the chart data for the mock trade
-    const chartData = (await mockTradeService.getMockTradeChart(mockTradeId)) as any; // FIXME: DONT USE ANY
+    const chartData = await mockTradeService.getMockTradeChart(mockTradeId);
 
     if (!chartData) {
       return res.status(404).json({ message: 'Mock trade not found or access denied' });
@@ -188,7 +188,7 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
 
     const outputTransformer = new OpenAIOutputTransformer<{ priceFactor: number }>();
 
-    const transformedChartData = outputTransformer.transform(chartData as string);
+    const priceFactors = outputTransformer.transform(chartData as string);
 
     const mockPlan = await InvestmentPlan.findById(mockTradeId);
 
@@ -196,9 +196,16 @@ export const getMockChart = async (req: Request, res: Response, next: NextFuncti
       return res.status(404).json({ message: 'Investment plan not found' });
     }
 
-    const transformedChartOutput = new ChartTransformer().transform(
-      transformedChartData,
-      mockPlan?.amount
+    const batch = await MockDataBatch.findOne({ mockIds: mockTradeId });
+
+    if (!batch) {
+      return res.status(404).json({ message: 'Batch not found' });
+    }
+
+    const transformedChartOutput = await new ChartTransformer().transform(
+      priceFactors,
+      mockPlan?.amount,
+      batch.batchId
     );
 
     res.status(200).json({

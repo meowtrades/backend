@@ -1,7 +1,7 @@
 import { IInvestmentPlan } from '../../models/InvestmentPlan';
 import { generateCustomId } from '../../utils/generators';
-import { PriceData } from '../services/price.service';
 import { Transaction } from '../types';
+import { MockDataBatch } from '../../models/MockDataBatch';
 
 export class TransactionTransformer {
   /**
@@ -11,17 +11,21 @@ export class TransactionTransformer {
    * @param options Optional pagination parameters
    *
    * Converts price factor chart data into Transaction[]
-   * creates timestamp for each transaction just like chart transformer
+   * Uses price history from the batch for accurate price data
    * Supports pagination to avoid processing unnecessary data
    * Returns transactions in reverse chronological order (most recent first)
    */
-  transform(
+  async transform(
     data: { priceFactor: number }[],
     investmentPlan: IInvestmentPlan,
     options?: { page?: number; limit?: number }
-  ): { transactions: Transaction[]; total: number } {
-    const now = new Date();
-    const interval = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+  ): Promise<{ transactions: Transaction[]; total: number }> {
+    // Get the batch to access price history
+    const batch = await MockDataBatch.findOne({ mockIds: investmentPlan.id });
+
+    if (!batch) {
+      throw new Error('Batch not found for investment plan');
+    }
 
     // Calculate total length for pagination
     const total = data.length;
@@ -53,26 +57,37 @@ export class TransactionTransformer {
       .map((transaction, i) => {
         // Calculate the actual index in the full dataset
         const actualIndex = startIndex + i;
-        const timestamp = Math.floor((now.getTime() - (total - actualIndex) * interval) / 1000);
+        const priceHistoryPoint = batch.priceHistory[actualIndex];
 
-        return {
+        if (!priceHistoryPoint) {
+          throw new Error(`Price history not found for index ${actualIndex}`);
+        }
+
+        const usdInvestment = investmentPlan.initialAmount * transaction.priceFactor;
+        const tokenAmount = usdInvestment / priceHistoryPoint.price;
+
+        const newTransaction: Transaction = {
           id: generateCustomId(),
+          type: 'buy',
+          createdAt: new Date(priceHistoryPoint.timestamp * 1000),
+          from: {
+            token: 'USDT',
+            amount: investmentPlan.initialAmount,
+          },
+          to: {
+            token: investmentPlan.tokenSymbol,
+            amount: tokenAmount,
+          },
+          price: priceHistoryPoint.price,
+          value: usdInvestment,
+          invested: usdInvestment,
           planId: investmentPlan.id,
           userId: investmentPlan.userId,
-          chain: 'mock',
-          amount: investmentPlan.initialAmount,
           status: 'completed',
-          retryCount: 0,
-          maxRetries: 0,
-          lastAttemptTime: new Date(timestamp * 1000).toISOString(),
-          createdAt: new Date(timestamp * 1000).toISOString(),
-          updatedAt: new Date(timestamp * 1000).toISOString(),
-          timestamp: timestamp,
-          price: transaction.priceFactor * investmentPlan.initialAmount,
-          value: accumulatedInvestments[actualIndex],
-          type: 'buy',
-          tokenSymbol: investmentPlan.tokenSymbol,
+          txHash: generateCustomId(), // Mock hash for historical data
         };
+
+        return newTransaction;
       })
       .reverse(); // Reverse to get most recent first
 
