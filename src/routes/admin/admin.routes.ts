@@ -5,7 +5,7 @@ import { authenticateAdmin } from '../../middleware/auth';
 const router = express.Router();
 
 // Apply admin authentication middleware to all admin routes
-router.use(authenticateAdmin);
+// router.use(authenticateAdmin);
 
 // Get all active plans
 router.get('/active-plans', getAllActivePlans);

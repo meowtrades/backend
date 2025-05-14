@@ -34,7 +34,10 @@ export class DCAService {
 
   private async initializeExistingPlans() {
     try {
-      const activePlans = await InvestmentPlan.find({ isActive: true });
+      const activePlans = await InvestmentPlan.find({
+        isActive: true,
+        chain: { $ne: 'mock' }, // Exclude mock chain plans
+      });
       for (const plan of activePlans) {
         try {
           const user = await this.getUserById(plan.userId);

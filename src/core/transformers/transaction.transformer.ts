@@ -39,17 +39,11 @@ export class TransactionTransformer {
       const page = options.page;
       const limit = options.limit;
       // Calculate indices from the end of the array
+      startIndex = total - page * limit;
       endIndex = total - (page - 1) * limit;
-      startIndex = Math.max(0, endIndex - limit);
+      // Ensure startIndex doesn't go below 0
+      startIndex = Math.max(0, startIndex);
     }
-
-    // First, calculate accumulated investment for all transactions up to each point
-    const accumulatedInvestments = data.reduce((acc: number[], transaction, index) => {
-      const previousTotal = index > 0 ? acc[index - 1] : 0;
-      const currentInvestment = investmentPlan.initialAmount * transaction.priceFactor;
-      acc.push(previousTotal + currentInvestment);
-      return acc;
-    }, []);
 
     // Process the required slice of data in reverse order
     const transactions = data
