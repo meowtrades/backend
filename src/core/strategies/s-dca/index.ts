@@ -11,16 +11,24 @@ import { TransactionRecoveryService } from '../../services/TransactionRecoverySe
 import { TokenRepository } from '../../factories/tokens.repository';
 
 export class DCAService {
+  private static instance: DCAService;
   private plugins: Map<string, DCAPlugin>;
   private cronJobs: Map<string, cron.ScheduledTask>;
   private recoveryService: TransactionRecoveryService;
 
-  constructor() {
+  private constructor() {
     this.plugins = new Map();
     this.cronJobs = new Map();
     this.recoveryService = TransactionRecoveryService.getInstance();
     logger.info('DCAService initialized, starting to initialize existing plans');
     this.initializeExistingPlans();
+  }
+
+  public static getInstance(): DCAService {
+    if (!DCAService.instance) {
+      DCAService.instance = new DCAService();
+    }
+    return DCAService.instance;
   }
 
   private getPlugin(chain: string): DCAPlugin {

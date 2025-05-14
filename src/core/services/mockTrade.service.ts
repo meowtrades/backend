@@ -27,7 +27,7 @@ export class MockTradeService {
   private dcaService: DCAService;
 
   constructor() {
-    this.dcaService = new DCAService();
+    this.dcaService = DCAService.getInstance();
     // Make sure mock plugin is initialized
     try {
       // Test if the plugin is accessible

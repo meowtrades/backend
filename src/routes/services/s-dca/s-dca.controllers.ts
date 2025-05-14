@@ -29,7 +29,7 @@ export const withdrawTokensSchema = z.object({
   }),
 });
 
-const dcaService = new DCAService();
+const dcaService = DCAService.getInstance();
 
 export const createPlan = async (req: Request, res: Response) => {
   try {
