@@ -7,6 +7,8 @@ const router = Router();
 // Get User's strategies
 router.get('/', strategiesController.getUserStrategies);
 
+router.get('/chart/:id', strategiesController.getStrategiesChart);
+
 // Get User's active strategies
 router.get('/active', strategiesController.getActiveStrategies);
 

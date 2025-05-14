@@ -139,8 +139,9 @@ export class InjectivePlugin implements DCAPlugin {
         throw new Error(`Broadcast response missing txHash: ${JSON.stringify(txResponse)}`);
       }
     } catch (error) {
-      console.log((error as Error).stack);
-      logger.error(`Failed to execute swap transaction: ${error}`);
+      // console.log((error as Error).stack);
+      // logger.error(`Failed to execute swap transaction: ${error}`);
+      console.log(error);
       throw new Error(`Failed to execute swap transaction: ${error}`);
     }
   }

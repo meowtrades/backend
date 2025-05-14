@@ -8,6 +8,7 @@ import { MockTradeService } from '../../../../core/services/mockTrade.service';
 import { logger } from '../../../../utils/logger';
 import { UserBalance } from '../../../../models/UserBalance';
 import { getStrategiesAnalytics } from '../../../../core/services/analytics.service';
+import { ChartTransformer } from '../../../../core/transformers/chart.transformer';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -467,5 +468,51 @@ export const getActiveStrategiesSeparated = async (
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const getStrategiesChart = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const planId = req.params.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    if (!planId) {
+      return res.status(400).json({ message: 'Strategy Id is required' });
+    }
+
+    const strategy = await InvestmentPlan.findById(planId).where({ userId });
+
+    if (!strategy) {
+      return res.status(404).json({ message: 'Strategy not found' });
+    }
+
+    if (strategy.chain === 'mock') {
+      const mockTradeService = new MockTradeService();
+      const chartData = await mockTradeService.getMockChart(planId);
+      return res.status(200).json({ data: chartData });
+    }
+
+    // Fetch Transactions for the strategy
+    const transactions = await TransactionAttempt.find({ userId, planId, status: 'completed' });
+
+    // Get the chart data for the strategy
+    const priceFactors = transactions.map(tx => ({
+      priceFactor: tx.invested / strategy.initialInvestment,
+    }));
+
+    const chartData = new ChartTransformer().transform(
+      priceFactors,
+      strategy.initialInvestment,
+      planId
+    );
+
+    return res.status(200).json({ data: chartData });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Internal server error', error });
   }
 };

@@ -21,6 +21,7 @@ import { OpenAIOutputTransformer } from '../transformers/openai.output.transform
 import { ChartTransformer } from '../transformers/chart.transformer';
 import { generateCustomId } from '../../utils/generators';
 import { TransactionTransformer } from '../transformers/transaction.transformer';
+import mongoose from 'mongoose';
 
 export class MockTradeService {
   private dcaService: DCAService;
@@ -441,5 +442,66 @@ export class MockTradeService {
 
     const transactionTransformer = new TransactionTransformer();
     return transactionTransformer.transform(transformedData, investmentPlan, options);
+  }
+
+  async getMockChart(mockTradeId: string) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(mockTradeId)) {
+        throw new Error('Invalid mock trade ID');
+      }
+
+      const plan = await InvestmentPlan.findById(mockTradeId);
+
+      if (!plan) {
+        throw new Error('Investment plan not found');
+      }
+
+      if (plan.chain !== 'mock') {
+        throw new Error('Unsupported chain');
+      }
+
+      // Get the chart data for the mock trade
+      const chartData = await this.getMockTradeChart(mockTradeId);
+
+      if (!chartData) {
+        throw new Error('Mock trade not found or access denied');
+      }
+
+      if (typeof chartData !== 'string' && chartData.status && chartData.status === 'in_progress') {
+        return {
+          message: 'Batch is still processing, please wait...',
+          data: null,
+        };
+      }
+
+      const outputTransformer = new OpenAIOutputTransformer<{ priceFactor: number }>();
+
+      const priceFactors = outputTransformer.transform(chartData as string);
+
+      const mockPlan = await InvestmentPlan.findById(mockTradeId);
+
+      if (!mockPlan) {
+        throw new Error('Investment plan not found');
+      }
+
+      const batch = await MockDataBatch.findOne({ mockIds: mockTradeId });
+
+      if (!batch) {
+        throw new Error('Batch not found');
+      }
+
+      const transformedChartOutput = await new ChartTransformer().transform(
+        priceFactors,
+        mockPlan?.amount,
+        batch.batchId
+      );
+
+      return {
+        data: transformedChartOutput,
+        totalInvestment: transformedChartOutput.reduce((acc, item) => acc + item.price, 0),
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 }
