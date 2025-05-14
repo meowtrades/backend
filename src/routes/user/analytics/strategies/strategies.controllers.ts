@@ -7,6 +7,7 @@ import { StrategyFactory, StrategyName } from '../../../../core/factories/strate
 import { MockTradeService } from '../../../../core/services/mockTrade.service';
 import { logger } from '../../../../utils/logger';
 import { UserBalance } from '../../../../models/UserBalance';
+import { getStrategiesAnalytics } from '../../../../core/services/analytics.service';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -275,7 +276,7 @@ export const getStrategyTransactions = async (req: AuthenticatedRequest, res: Re
   }
 };
 
-interface UserStrategy {
+export interface UserStrategy {
   _id: string;
   totalInvested: number;
   chain: string;
@@ -337,59 +338,37 @@ export const getActiveStrategiesAnalytics = async (
   next: NextFunction
 ) => {
   const userId = req.user?.id;
+
   if (!userId) {
     return res.status(401).json({ message: 'User not authenticated' });
   }
 
   const activeStrategies = await InvestmentPlan.find({ userId, isActive: true });
 
-  const analytics = await Promise.all(
-    activeStrategies.map(async strategy => {
-      const strategyDetails = StrategyFactory.getStrategyDetails(
-        strategy.strategyId as StrategyName
-      );
+  const mockStrategies = activeStrategies.filter(strategy => strategy.chain === 'mock');
+  const realStrategies = activeStrategies.filter(strategy => strategy.chain !== 'mock');
 
-      let currentValue = 0;
-      let totalProfitLoss = 0;
-      let totalTokens = 0;
-      let averageBuyPrice = 0;
-      let currentPrice = 0;
+  const mockAnalytics = await Promise.all(
+    mockStrategies.map(async strategy => {
+      const analytics = await getStrategiesAnalytics(strategy._id.toString());
 
-      if (strategy.chain === 'mock') {
-        const mockTradeService = new MockTradeService();
-        const { transactions } = await mockTradeService.getTransactions(strategy._id.toString(), {
-          page: 1,
-          limit: 1,
-        });
-      }
-
-      if (strategy.chain === 'real') {
-        const userBalance = await UserBalance.findOne({ userId });
-        const balance = userBalance?.balances.find(
-          b => b.chainId === strategy.chain && b.tokenSymbol === strategy.tokenSymbol
-        );
-
-        if (balance) {
-          currentValue = parseFloat(balance.balance);
-          totalProfitLoss = currentValue - strategy.initialInvestment;
-        }
-      }
-
-      return {
-        id: strategy._id,
-        chain: strategy.chain,
-        tokenSymbol: strategy.tokenSymbol,
-        strategyType: {
-          fullName: strategyDetails.name,
-          shortName: strategy.strategyId,
-        },
-        profit: 0,
-        profitPercentage: 0,
-        currentValue: 0,
-        totalInvested: 0,
-      };
+      return analytics;
     })
   );
+
+  const realAnalytics = await Promise.all(
+    realStrategies.map(async strategy => {
+      const analytics = await getStrategiesAnalytics(strategy._id.toString());
+      return analytics;
+    })
+  );
+
+  return res.status(200).json({
+    data: {
+      mock: mockAnalytics,
+      real: realAnalytics,
+    },
+  });
 };
 
 export const getActiveStrategiesSeparated = async (
