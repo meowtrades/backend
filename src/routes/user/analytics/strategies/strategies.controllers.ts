@@ -493,22 +493,17 @@ export const getStrategiesChart = async (req: AuthenticatedRequest, res: Respons
     if (strategy.chain === 'mock') {
       const mockTradeService = new MockTradeService();
       const chartData = await mockTradeService.getMockChart(planId);
-      return res.status(200).json({ data: chartData });
+      return res.status(200).json({ ...chartData });
     }
 
     // Fetch Transactions for the strategy
     const transactions = await TransactionAttempt.find({ userId, planId, status: 'completed' });
 
     // Get the chart data for the strategy
-    const priceFactors = transactions.map(tx => ({
-      priceFactor: tx.invested / strategy.initialInvestment,
+    const chartData = transactions.map(tx => ({
+      price: tx.invested,
+      timestamp: tx.createdAt.getTime(),
     }));
-
-    const chartData = new ChartTransformer().transform(
-      priceFactors,
-      strategy.initialInvestment,
-      planId
-    );
 
     return res.status(200).json({ data: chartData });
   } catch (error) {
